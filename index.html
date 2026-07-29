@@ -164,6 +164,14 @@
     padding: 0 4vw;
     box-sizing: border-box;
   }
+  #credit{
+    color: rgba(255,255,255,0.32);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-align: center;
+    margin-top: 10px;
+  }
   .hint-row{
     -webkit-appearance: none; appearance: none;
     color: rgba(255,255,255,0.55);
@@ -206,6 +214,7 @@
   @media print{
     html,body{ background:none; height:auto; }
     #hint{ display:none; }
+    #credit{ display:none; }
     #poster{
       height: 297mm; width:210mm; max-width:none;
       border-radius:0; box-shadow:none;
@@ -227,7 +236,7 @@
       </header>
 
       <main class="center">
-        <div class="temp" id="temp">--<sup>°</sup></div>
+        <div class="temp" id="temp">--</div>
         <div class="condition">
           <span id="icon"></span>
           <span class="label" id="condLabel">—</span>
@@ -283,6 +292,7 @@
         <span class="or-click" id="orClickLang">or click</span>
         <span id="hintLang">TO CHANGE LANGUAGE</span>
       </button>
+      <div id="credit">Created, designed and coded by @enzovcarrieri using Claude Code</div>
     </div>
   </div>
 
@@ -511,32 +521,32 @@ const CITIES = [
 ];
 
 const UI = {
-  pt:{ wind:"Vento", precipitation:"Precipitação", location:"Localização",
-       feelsLike:v=>`Sensação de ${v}°`, humidity:v=>`umidade ${v}%`, localTime:t=>`${t} (hora local)`,
+  pt:{ wind:"Vento", precipitation:"Precip.", location:"Localização",
+       feelsLike:v=>`Sensação de ${v}°`, humidity:v=>`Umidade ${v}%`, localTime:t=>`${t} (hora local)`,
        hintCity:"PARA TROCAR DE CIDADE", hintUnit:u=>`PARA MUDAR PARA ${u}`, hintLang:"PARA MUDAR O IDIOMA", orClick:"ou clique",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"falha ao carregar clima", loading:"carregando…",
        lon:{pos:"L",neg:"O"} },
-  en:{ wind:"Wind", precipitation:"Precipitation", location:"Location",
+  en:{ wind:"Wind", precipitation:"Precip.", location:"Location",
        feelsLike:v=>`Feels like ${v}°`, humidity:v=>`humidity ${v}%`, localTime:t=>`${t} (local time)`,
        hintCity:"TO CHANGE CITY", hintUnit:u=>`TO CHANGE TO ${u}`, hintLang:"TO CHANGE LANGUAGE", orClick:"or click",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"failed to load weather", loading:"loading…",
        lon:{pos:"E",neg:"W"} },
-  es:{ wind:"Viento", precipitation:"Precipitación", location:"Ubicación",
+  es:{ wind:"Viento", precipitation:"Precip.", location:"Ubicación",
        feelsLike:v=>`Sensación de ${v}°`, humidity:v=>`humedad ${v}%`, localTime:t=>`${t} (hora local)`,
        hintCity:"PARA CAMBIAR DE CIUDAD", hintUnit:u=>`PARA CAMBIAR A ${u}`, hintLang:"PARA CAMBIAR EL IDIOMA", orClick:"o haz clic",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"no se pudo cargar el clima", loading:"cargando…",
        lon:{pos:"E",neg:"O"} },
-  fr:{ wind:"Vent", precipitation:"Précipitations", location:"Localisation",
+  fr:{ wind:"Vent", precipitation:"Précip.", location:"Localisation",
        feelsLike:v=>`Ressenti ${v}°`, humidity:v=>`humidité ${v}%`, localTime:t=>`${t} (heure locale)`,
        hintCity:"POUR CHANGER DE VILLE", hintUnit:u=>`POUR PASSER EN ${u}`, hintLang:"POUR CHANGER DE LANGUE", orClick:"ou cliquez",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"échec du chargement de la météo", loading:"chargement…",
        lon:{pos:"E",neg:"O"} },
-  de:{ wind:"Wind", precipitation:"Niederschlag", location:"Standort",
+  de:{ wind:"Wind", precipitation:"Nied.", location:"Standort",
        feelsLike:v=>`Gefühlt ${v}°`, humidity:v=>`Luftfeuchtigkeit ${v}%`, localTime:t=>`${t} (Ortszeit)`,
        hintCity:"UM DIE STADT ZU WECHSELN", hintUnit:u=>`UM ZU ${u} ZU WECHSELN`, hintLang:"UM DIE SPRACHE ZU WECHSELN", orClick:"oder klicken",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"Wetter konnte nicht geladen werden", loading:"lädt…",
        lon:{pos:"O",neg:"W"} },
-  it:{ wind:"Vento", precipitation:"Precipitazioni", location:"Posizione",
+  it:{ wind:"Vento", precipitation:"Precip.", location:"Posizione",
        feelsLike:v=>`Percepita ${v}°`, humidity:v=>`umidità ${v}%`, localTime:t=>`${t} (ora locale)`,
        hintCity:"PER CAMBIARE CITTÀ", hintUnit:u=>`PER PASSARE A ${u}`, hintLang:"PER CAMBIARE LINGUA", orClick:"o clicca",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"impossibile caricare il meteo", loading:"caricamento…",
@@ -586,7 +596,7 @@ const UI = {
        hintCity:"ABY ZMIENIĆ MIASTO", hintUnit:u=>`ABY PRZEŁĄCZYĆ NA ${u}`, hintLang:"ABY ZMIENIĆ JĘZYK", orClick:"lub kliknij",
        unitName:{C:"CELSJUSZA",F:"FAHRENHEITA"}, failLoad:"nie udało się wczytać pogody", loading:"wczytywanie…",
        lon:{pos:"E",neg:"W"} },
-  sv:{ wind:"Vind", precipitation:"Nederbörd", location:"Plats",
+  sv:{ wind:"Vind", precipitation:"Nederb.", location:"Plats",
        feelsLike:v=>`Känns som ${v}°`, humidity:v=>`luftfuktighet ${v}%`, localTime:t=>`${t} (lokal tid)`,
        hintCity:"FÖR ATT BYTA STAD", hintUnit:u=>`FÖR ATT BYTA TILL ${u}`, hintLang:"FÖR ATT BYTA SPRÅK", orClick:"eller klicka",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"det gick inte att läsa in vädret", loading:"läser in…",
@@ -601,12 +611,12 @@ const UI = {
        hintCity:"FOR AT SKIFTE BY", hintUnit:u=>`FOR AT SKIFTE TIL ${u}`, hintLang:"FOR AT SKIFTE SPROG", orClick:"eller klik",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"vejret kunne ikke indlæses", loading:"indlæser…",
        lon:{pos:"Ø",neg:"V"} },
-  fi:{ wind:"Tuuli", precipitation:"Sademäärä", location:"Sijainti",
+  fi:{ wind:"Tuuli", precipitation:"Sadem.", location:"Sijainti",
        feelsLike:v=>`Tuntuu kuin ${v}°`, humidity:v=>`kosteus ${v}%`, localTime:t=>`${t} (paikallinen aika)`,
        hintCity:"VAIHTAAKSESI KAUPUNKIA", hintUnit:u=>`VAIHTAAKSESI ${u}:EEN`, hintLang:"VAIHTAAKSESI KIELTÄ", orClick:"tai napsauta",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"säätä ei voitu ladata", loading:"ladataan…",
        lon:{pos:"I",neg:"L"} },
-  el:{ wind:"Άνεμος", precipitation:"Βροχόπτωση", location:"Τοποθεσία",
+  el:{ wind:"Άνεμος", precipitation:"Βροχόπτ.", location:"Τοποθεσία",
        feelsLike:v=>`Αίσθηση ${v}°`, humidity:v=>`υγρασία ${v}%`, localTime:t=>`${t} (τοπική ώρα)`,
        hintCity:"ΓΙΑ ΑΛΛΑΓΗ ΠΟΛΗΣ", hintUnit:u=>`ΓΙΑ ΑΛΛΑΓΗ ΣΕ ${u}`, hintLang:"ΓΙΑ ΑΛΛΑΓΗ ΓΛΩΣΣΑΣ", orClick:"ή κάντε κλικ",
        unitName:{C:"ΚΕΛΣΙΟΥ",F:"ΦΑΡΕΝΑΪΤ"}, failLoad:"ο καιρός δεν φορτώθηκε", loading:"φόρτωση…",
@@ -621,7 +631,7 @@ const UI = {
        hintCity:"VÁROS VÁLTÁSHOZ", hintUnit:u=>`${u}-RA VÁLTÁSHOZ`, hintLang:"NYELV VÁLTÁSHOZ", orClick:"vagy kattints",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"nem sikerült betölteni az időjárást", loading:"betöltés…",
        lon:{pos:"K",neg:"NY"} },
-  ro:{ wind:"Vânt", precipitation:"Precipitații", location:"Locație",
+  ro:{ wind:"Vânt", precipitation:"Precip.", location:"Locație",
        feelsLike:v=>`Se simte ca ${v}°`, humidity:v=>`umiditate ${v}%`, localTime:t=>`${t} (ora locală)`,
        hintCity:"PENTRU A SCHIMBA ORAȘUL", hintUnit:u=>`PENTRU A TRECE LA ${u}`, hintLang:"PENTRU A SCHIMBA LIMBA", orClick:"sau apasă",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"vremea nu a putut fi încărcată", loading:"se încarcă…",
@@ -631,7 +641,7 @@ const UI = {
        hintCity:"ЩОБ ЗМІНИТИ МІСТО", hintUnit:u=>`ЩОБ ПЕРЕЙТИ НА ${u}`, hintLang:"ЩОБ ЗМІНИТИ МОВУ", orClick:"або натисніть",
        unitName:{C:"ЦЕЛЬСІЯ",F:"ФАРЕНГЕЙТА"}, failLoad:"не вдалося завантажити погоду", loading:"завантаження…",
        lon:{pos:"Сх",neg:"Зх"} },
-  vi:{ wind:"Gió", precipitation:"Lượng mưa", location:"Vị trí",
+  vi:{ wind:"Gió", precipitation:"Mưa", location:"Vị trí",
        feelsLike:v=>`Cảm giác như ${v}°`, humidity:v=>`độ ẩm ${v}%`, localTime:t=>`${t} (giờ địa phương)`,
        hintCity:"ĐỂ ĐỔI THÀNH PHỐ", hintUnit:u=>`ĐỂ CHUYỂN SANG ${u}`, hintLang:"ĐỂ ĐỔI NGÔN NGỮ", orClick:"hoặc nhấp",
        unitName:{C:"ĐỘ C",F:"ĐỘ F"}, failLoad:"không thể tải thời tiết", loading:"đang tải…",
@@ -1005,7 +1015,7 @@ function render(){
   const displayFeels = unit === "C" ? feelsC : celsiusToF(feelsC);
 
   el.poster.style.background = tempToBackground(tempC);
-  el.temp.innerHTML = `${Math.round(displayTemp)}<sup>°</sup>`;
+  el.temp.textContent = `${Math.round(displayTemp)}`;
   el.feels.textContent = t.feelsLike(Math.round(displayFeels));
 
   const [icon, label] = weatherVisual(lastCur.weather_code, lang());
