@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poster Meteorológico</title>
+<style>
+  :root{
+    --card-bg: rgba(255,255,255,0.16);
+    --card-border: rgba(255,255,255,0.32);
+    --text: #ffffff;
+    --text-dim: rgba(255,255,255,0.72);
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:#0b0b0e;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  #stage{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:22px;
+    width:100%; height:100%;
+  }
+  #poster{
+    position:relative;
+    aspect-ratio: 210 / 297;
+    height: 90vh;
+    max-width: 92vw;
+    border-radius: 22px;
+    overflow:hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 4px 20px rgba(0,0,0,0.4);
+    transition: background 1.1s ease;
+    color: var(--text);
+    display:flex; flex-direction:column;
+  }
+  /* decorative drifting atmosphere blobs for a "satellite/weather" feel */
+  .blob{
+    position:absolute; border-radius:50%;
+    filter: blur(60px);
+    opacity:0.35;
+    background: rgba(255,255,255,0.5);
+    mix-blend-mode: overlay;
+    pointer-events:none;
+    animation: drift 26s ease-in-out infinite;
+  }
+  .blob.b1{ width:60%; height:26%; top:-6%; left:-10%; animation-duration: 30s; }
+  .blob.b2{ width:50%; height:22%; bottom:6%; right:-12%; animation-duration: 22s; animation-delay:-8s; }
+  .blob.b3{ width:40%; height:18%; top:38%; left:30%; animation-duration: 34s; animation-delay:-4s; opacity:0.2;}
+  @keyframes drift{
+    0%{ transform: translate(0,0) scale(1); }
+    50%{ transform: translate(4%, 3%) scale(1.08); }
+    100%{ transform: translate(0,0) scale(1); }
+  }
+
+  header.top{
+    position:relative; z-index:2;
+    padding: 6.5% 8% 0 8%;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  header.top .city{
+    font-size: clamp(28px, 6.2vw, 46px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.25);
+  }
+  header.top .meta{
+    font-size: clamp(12px, 2.1vw, 15px);
+    color: var(--text-dim);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  main.center{
+    position:relative; z-index:2;
+    flex:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding: 0 6%;
+  }
+  .temp{
+    font-size: clamp(90px, 20vw, 170px);
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.25);
+  }
+  .temp sup{
+    font-size: 0.34em;
+    font-weight: 200;
+    vertical-align: 20%;
+  }
+  .condition{
+    display:flex; align-items:center; gap:10px;
+    margin-top: 6px;
+  }
+  .condition svg{ width: clamp(28px,5vw,38px); height: clamp(28px,5vw,38px); }
+  .condition .label{
+    font-size: clamp(16px, 3vw, 21px);
+    font-weight: 600;
+  }
+  .feels{
+    margin-top: 8px;
+    font-size: clamp(12px, 2vw, 14px);
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  footer.cards{
+    position:relative; z-index:2;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1.15fr;
+    gap: 3.2%;
+    padding: 0 6% 7% 6%;
+  }
+  .card{
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    border-radius: 18px;
+    padding: 10px 12px;
+    display:flex; flex-direction:column; gap:6px;
+    min-height: 108px;
+  }
+  .card .card-title{
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .card .card-main{
+    display:flex; align-items:center; gap:8px;
+    font-size: clamp(16px,3vw,20px);
+    font-weight: 600;
+    margin-top: auto;
+  }
+  .card .card-sub{
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .wind-arrow{
+    width: 20px; height:20px;
+    transition: transform 0.6s ease;
+  }
+  .map-card svg{ width:100%; height: 56px; }
+  .map-card .card-sub{ margin-top:2px; }
+
+  #hint{
+    display:flex; flex-direction:column; align-items:center; gap:7px;
+  }
+  .hint-row{
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    display:flex; align-items:center; gap:9px;
+  }
+  .keycap{
+    display:inline-flex; align-items:center; justify-content:center;
+    height: 22px; min-width: 22px;
+    padding: 0 6px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 3px rgba(0,0,0,0.3);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    color: rgba(255,255,255,0.8);
+    flex: none;
+  }
+  .keycap.keycap-space{ width: 46px; }
+  .keycap.keycap-return{ font-size: 14px; }
+
+  @media print{
+    html,body{ background:none; height:auto; }
+    #hint{ display:none; }
+    #poster{
+      height: 297mm; width:210mm; max-width:none;
+      border-radius:0; box-shadow:none;
+    }
+    @page{ size: A4 portrait; margin:0; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="poster">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+
+      <header class="top">
+        <div class="city" id="city">—</div>
+        <div class="meta" id="meta">carregando…</div>
+      </header>
+
+      <main class="center">
+        <div class="temp" id="temp">--<sup>°</sup></div>
+        <div class="condition">
+          <span id="icon"></span>
+          <span class="label" id="condLabel">—</span>
+        </div>
+        <div class="feels" id="feels">&nbsp;</div>
+      </main>
+
+      <footer class="cards">
+        <div class="card">
+          <div class="card-title" id="titleWind">Vento</div>
+          <div class="card-main">
+            <svg class="wind-arrow" id="windArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="21" x2="12" y2="3"></line>
+              <polyline points="5 10 12 3 19 10"></polyline>
+            </svg>
+            <span id="windSpeed">--</span>
+          </div>
+          <div class="card-sub" id="windDir">-- km/h</div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" id="titlePrecip">Precipitação</div>
+          <div class="card-main">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.7s6 6.6 6 11.2a6 6 0 0 1-12 0c0-4.6 6-11.2 6-11.2z"></path>
+            </svg>
+            <span id="precip">--</span>
+          </div>
+          <div class="card-sub" id="humidity">umidade --%</div>
+        </div>
+
+        <div class="card map-card">
+          <div class="card-title" id="titleLocation">Localização</div>
+          <svg id="mapSvg" viewBox="0 0 200 100" preserveAspectRatio="none"></svg>
+          <div class="card-sub" id="coords">-- , --</div>
+        </div>
+      </footer>
+    </div>
+
+    <div id="hint">
+      <div class="hint-row">
+        <span class="keycap keycap-space" aria-label="space"></span>
+        <span id="hintCity">TO CHANGE CITY</span>
+      </div>
+      <div class="hint-row">
+        <span class="keycap keycap-return" aria-label="return">⏎</span>
+        <span id="hintUnit">TO CHANGE TO FAHRENHEIT</span>
+      </div>
+      <div class="hint-row">
+        <span class="keycap keycap-letter" aria-label="w">W</span>
+        <span id="hintLang">TO CHANGE LANGUAGE</span>
+      </div>
+    </div>
+  </div>
+
+<script>
+const LANGS = ["pt","en","es","fr","de","it","nl","ru","ja","zh","ko","ar","hi","tr","pl","sv","no","da","fi","el","cs","hu","ro","uk","vi"];
+let langIdx = 0;
+let unit = "C"; // "C" | "F"
+
+const CITIES = [
+  { lat:-22.9068, lon:-43.1729, tz:"America/Sao_Paulo",
+    i18n:{ pt:{city:"Rio de Janeiro",country:"Brasil"}, en:{city:"Rio de Janeiro",country:"Brazil"}, es:{city:"Río de Janeiro",country:"Brasil"}, fr:{city:"Rio de Janeiro",country:"Brésil"}, de:{city:"Rio de Janeiro",country:"Brasilien"},
+          it:{city:"Rio de Janeiro",country:"Brasile"}, nl:{city:"Rio de Janeiro",country:"Brazilië"}, ru:{city:"Рио-де-Жанейро",country:"Бразилия"}, ja:{city:"リオデジャネイロ",country:"ブラジル"}, zh:{city:"里约热内卢",country:"巴西"},
+          ko:{city:"리우데자네이루",country:"브라질"}, ar:{city:"ريو دي جانيرو",country:"البرازيل"}, hi:{city:"रियो डी जनेरो",country:"ब्राज़ील"}, tr:{city:"Rio de Janeiro",country:"Brezilya"}, pl:{city:"Rio de Janeiro",country:"Brazylia"},
+          sv:{city:"Rio de Janeiro",country:"Brasilien"}, no:{city:"Rio de Janeiro",country:"Brasil"}, da:{city:"Rio de Janeiro",country:"Brasilien"}, fi:{city:"Rio de Janeiro",country:"Brasilia"}, el:{city:"Ρίο ντε Τζανέιρο",country:"Βραζιλία"},
+          cs:{city:"Rio de Janeiro",country:"Brazílie"}, hu:{city:"Rio de Janeiro",country:"Brazília"}, ro:{city:"Rio de Janeiro",country:"Brazilia"}, uk:{city:"Ріо-де-Жанейро",country:"Бразилія"}, vi:{city:"Rio de Janeiro",country:"Brazil"} } },
+  { lat:40.7128, lon:-74.0060, tz:"America/New_York",
+    i18n:{ pt:{city:"Nova York",country:"Estados Unidos"}, en:{city:"New York",country:"United States"}, es:{city:"Nueva York",country:"Estados Unidos"}, fr:{city:"New York",country:"États-Unis"}, de:{city:"New York",country:"Vereinigte Staaten"},
+          it:{city:"New York",country:"Stati Uniti"}, nl:{city:"New York",country:"Verenigde Staten"}, ru:{city:"Нью-Йорк",country:"США"}, ja:{city:"ニューヨーク",country:"アメリカ合衆国"}, zh:{city:"纽约",country:"美国"},
+          ko:{city:"뉴욕",country:"미국"}, ar:{city:"نيويورك",country:"الولايات المتحدة"}, hi:{city:"न्यूयॉर्क",country:"संयुक्त राज्य अमेरिका"}, tr:{city:"New York",country:"Amerika Birleşik Devletleri"}, pl:{city:"Nowy Jork",country:"Stany Zjednoczone"},
+          sv:{city:"New York",country:"USA"}, no:{city:"New York",country:"USA"}, da:{city:"New York",country:"USA"}, fi:{city:"New York",country:"Yhdysvallat"}, el:{city:"Νέα Υόρκη",country:"Ηνωμένες Πολιτείες"},
+          cs:{city:"New York",country:"Spojené státy"}, hu:{city:"New York",country:"Egyesült Államok"}, ro:{city:"New York",country:"Statele Unite"}, uk:{city:"Нью-Йорк",country:"США"}, vi:{city:"New York",country:"Hoa Kỳ"} } },
+  { lat:51.5074, lon:-0.1278, tz:"Europe/London",
+    i18n:{ pt:{city:"Londres",country:"Reino Unido"}, en:{city:"London",country:"United Kingdom"}, es:{city:"Londres",country:"Reino Unido"}, fr:{city:"Londres",country:"Royaume-Uni"}, de:{city:"London",country:"Vereinigtes Königreich"},
+          it:{city:"Londra",country:"Regno Unito"}, nl:{city:"Londen",country:"Verenigd Koninkrijk"}, ru:{city:"Лондон",country:"Великобритания"}, ja:{city:"ロンドン",country:"イギリス"}, zh:{city:"伦敦",country:"英国"},
+          ko:{city:"런던",country:"영국"}, ar:{city:"لندن",country:"المملكة المتحدة"}, hi:{city:"लंदन",country:"यूनाइटेड किंगडम"}, tr:{city:"Londra",country:"Birleşik Krallık"}, pl:{city:"Londyn",country:"Wielka Brytania"},
+          sv:{city:"London",country:"Storbritannien"}, no:{city:"London",country:"Storbritannia"}, da:{city:"London",country:"Storbritannien"}, fi:{city:"Lontoo",country:"Yhdistynyt kuningaskunta"}, el:{city:"Λονδίνο",country:"Ηνωμένο Βασίλειο"},
+          cs:{city:"Londýn",country:"Spojené království"}, hu:{city:"London",country:"Egyesült Királyság"}, ro:{city:"Londra",country:"Regatul Unit"}, uk:{city:"Лондон",country:"Велика Британія"}, vi:{city:"London",country:"Vương quốc Anh"} } },
+  { lat:35.6762, lon:139.6503, tz:"Asia/Tokyo",
+    i18n:{ pt:{city:"Tóquio",country:"Japão"}, en:{city:"Tokyo",country:"Japan"}, es:{city:"Tokio",country:"Japón"}, fr:{city:"Tokyo",country:"Japon"}, de:{city:"Tokio",country:"Japan"},
+          it:{city:"Tokyo",country:"Giappone"}, nl:{city:"Tokio",country:"Japan"}, ru:{city:"Токио",country:"Япония"}, ja:{city:"東京",country:"日本"}, zh:{city:"东京",country:"日本"},
+          ko:{city:"도쿄",country:"일본"}, ar:{city:"طوكيو",country:"اليابان"}, hi:{city:"टोक्यो",country:"जापान"}, tr:{city:"Tokyo",country:"Japonya"}, pl:{city:"Tokio",country:"Japonia"},
+          sv:{city:"Tokyo",country:"Japan"}, no:{city:"Tokyo",country:"Japan"}, da:{city:"Tokyo",country:"Japan"}, fi:{city:"Tokio",country:"Japani"}, el:{city:"Τόκιο",country:"Ιαπωνία"},
+          cs:{city:"Tokio",country:"Japonsko"}, hu:{city:"Tokió",country:"Japán"}, ro:{city:"Tokyo",country:"Japonia"}, uk:{city:"Токіо",country:"Японія"}, vi:{city:"Tokyo",country:"Nhật Bản"} } },
+  { lat:55.7558, lon:37.6173, tz:"Europe/Moscow",
+    i18n:{ pt:{city:"Moscou",country:"Rússia"}, en:{city:"Moscow",country:"Russia"}, es:{city:"Moscú",country:"Rusia"}, fr:{city:"Moscou",country:"Russie"}, de:{city:"Moskau",country:"Russland"},
+          it:{city:"Mosca",country:"Russia"}, nl:{city:"Moskou",country:"Rusland"}, ru:{city:"Москва",country:"Россия"}, ja:{city:"モスクワ",country:"ロシア"}, zh:{city:"莫斯科",country:"俄罗斯"},
+          ko:{city:"모스크바",country:"러시아"}, ar:{city:"موسكو",country:"روسيا"}, hi:{city:"मॉस्को",country:"रूस"}, tr:{city:"Moskova",country:"Rusya"}, pl:{city:"Moskwa",country:"Rosja"},
+          sv:{city:"Moskva",country:"Ryssland"}, no:{city:"Moskva",country:"Russland"}, da:{city:"Moskva",country:"Rusland"}, fi:{city:"Moskova",country:"Venäjä"}, el:{city:"Μόσχα",country:"Ρωσία"},
+          cs:{city:"Moskva",country:"Rusko"}, hu:{city:"Moszkva",country:"Oroszország"}, ro:{city:"Moscova",country:"Rusia"}, uk:{city:"Москва",country:"Росія"}, vi:{city:"Moskva",country:"Nga"} } },
+  { lat:30.0444, lon:31.2357, tz:"Africa/Cairo",
+    i18n:{ pt:{city:"Cairo",country:"Egito"}, en:{city:"Cairo",country:"Egypt"}, es:{city:"El Cairo",country:"Egipto"}, fr:{city:"Le Caire",country:"Égypte"}, de:{city:"Kairo",country:"Ägypten"},
+          it:{city:"Il Cairo",country:"Egitto"}, nl:{city:"Caïro",country:"Egypte"}, ru:{city:"Каир",country:"Египет"}, ja:{city:"カイロ",country:"エジプト"}, zh:{city:"开罗",country:"埃及"},
+          ko:{city:"카이로",country:"이집트"}, ar:{city:"القاهرة",country:"مصر"}, hi:{city:"काहिरा",country:"मिस्र"}, tr:{city:"Kahire",country:"Mısır"}, pl:{city:"Kair",country:"Egipt"},
+          sv:{city:"Kairo",country:"Egypten"}, no:{city:"Kairo",country:"Egypt"}, da:{city:"Cairo",country:"Egypten"}, fi:{city:"Kairo",country:"Egypti"}, el:{city:"Κάιρο",country:"Αίγυπτος"},
+          cs:{city:"Káhira",country:"Egypt"}, hu:{city:"Kairó",country:"Egyiptom"}, ro:{city:"Cairo",country:"Egipt"}, uk:{city:"Каїр",country:"Єгипет"}, vi:{city:"Cairo",country:"Ai Cập"} } },
+  { lat:-33.8688, lon:151.2093, tz:"Australia/Sydney",
+    i18n:{ pt:{city:"Sydney",country:"Austrália"}, en:{city:"Sydney",country:"Australia"}, es:{city:"Sídney",country:"Australia"}, fr:{city:"Sydney",country:"Australie"}, de:{city:"Sydney",country:"Australien"},
+          it:{city:"Sydney",country:"Australia"}, nl:{city:"Sydney",country:"Australië"}, ru:{city:"Сидней",country:"Австралия"}, ja:{city:"シドニー",country:"オーストラリア"}, zh:{city:"悉尼",country:"澳大利亚"},
+          ko:{city:"시드니",country:"호주"}, ar:{city:"سيدني",country:"أستراليا"}, hi:{city:"सिडनी",country:"ऑस्ट्रेलिया"}, tr:{city:"Sidney",country:"Avustralya"}, pl:{city:"Sydney",country:"Australia"},
+          sv:{city:"Sydney",country:"Australien"}, no:{city:"Sydney",country:"Australia"}, da:{city:"Sydney",country:"Australien"}, fi:{city:"Sydney",country:"Australia"}, el:{city:"Σίδνεϊ",country:"Αυστραλία"},
+          cs:{city:"Sydney",country:"Austrálie"}, hu:{city:"Sydney",country:"Ausztrália"}, ro:{city:"Sydney",country:"Australia"}, uk:{city:"Сідней",country:"Австралія"}, vi:{city:"Sydney",country:"Úc"} } },
+  { lat:64.1466, lon:-21.9426, tz:"Atlantic/Reykjavik",
+    i18n:{ pt:{city:"Reykjavík",country:"Islândia"}, en:{city:"Reykjavik",country:"Iceland"}, es:{city:"Reikiavik",country:"Islandia"}, fr:{city:"Reykjavik",country:"Islande"}, de:{city:"Reykjavik",country:"Island"},
+          it:{city:"Reykjavik",country:"Islanda"}, nl:{city:"Reykjavik",country:"IJsland"}, ru:{city:"Рейкьявик",country:"Исландия"}, ja:{city:"レイキャビク",country:"アイスランド"}, zh:{city:"雷克雅未克",country:"冰岛"},
+          ko:{city:"레이캬비크",country:"아이슬란드"}, ar:{city:"ريكيافيك",country:"آيسلندا"}, hi:{city:"रेक्जाविक",country:"आइसलैंड"}, tr:{city:"Reykjavik",country:"İzlanda"}, pl:{city:"Reykjavik",country:"Islandia"},
+          sv:{city:"Reykjavik",country:"Island"}, no:{city:"Reykjavik",country:"Island"}, da:{city:"Reykjavik",country:"Island"}, fi:{city:"Reykjavik",country:"Islanti"}, el:{city:"Ρέικιαβικ",country:"Ισλανδία"},
+          cs:{city:"Reykjavík",country:"Island"}, hu:{city:"Reykjavík",country:"Izland"}, ro:{city:"Reykjavik",country:"Islanda"}, uk:{city:"Рейк'явік",country:"Ісландія"}, vi:{city:"Reykjavik",country:"Iceland"} } },
+  { lat:25.2048, lon:55.2708, tz:"Asia/Dubai",
+    i18n:{ pt:{city:"Dubai",country:"Emirados Árabes Unidos"}, en:{city:"Dubai",country:"United Arab Emirates"}, es:{city:"Dubái",country:"Emiratos Árabes Unidos"}, fr:{city:"Dubaï",country:"Émirats arabes unis"}, de:{city:"Dubai",country:"Vereinigte Arabische Emirate"},
+          it:{city:"Dubai",country:"Emirati Arabi Uniti"}, nl:{city:"Dubai",country:"Verenigde Arabische Emiraten"}, ru:{city:"Дубай",country:"ОАЭ"}, ja:{city:"ドバイ",country:"アラブ首長国連邦"}, zh:{city:"迪拜",country:"阿拉伯联合酋长国"},
+          ko:{city:"두바이",country:"아랍에미리트"}, ar:{city:"دبي",country:"الإمارات العربية المتحدة"}, hi:{city:"दुबई",country:"संयुक्त अरब अमीरात"}, tr:{city:"Dubai",country:"Birleşik Arap Emirlikleri"}, pl:{city:"Dubaj",country:"Zjednoczone Emiraty Arabskie"},
+          sv:{city:"Dubai",country:"Förenade Arabemiraten"}, no:{city:"Dubai",country:"Forente arabiske emirater"}, da:{city:"Dubai",country:"Forenede Arabiske Emirater"}, fi:{city:"Dubai",country:"Arabiemiirikunnat"}, el:{city:"Ντουμπάι",country:"Ηνωμένα Αραβικά Εμιράτα"},
+          cs:{city:"Dubaj",country:"Spojené arabské emiráty"}, hu:{city:"Dubaj",country:"Egyesült Arab Emírségek"}, ro:{city:"Dubai",country:"Emiratele Arabe Unite"}, uk:{city:"Дубай",country:"ОАЕ"}, vi:{city:"Dubai",country:"Các Tiểu vương quốc Ả Rập Thống nhất"} } },
+  { lat:-33.9249, lon:18.4241, tz:"Africa/Johannesburg",
+    i18n:{ pt:{city:"Cidade do Cabo",country:"África do Sul"}, en:{city:"Cape Town",country:"South Africa"}, es:{city:"Ciudad del Cabo",country:"Sudáfrica"}, fr:{city:"Le Cap",country:"Afrique du Sud"}, de:{city:"Kapstadt",country:"Südafrika"},
+          it:{city:"Città del Capo",country:"Sudafrica"}, nl:{city:"Kaapstad",country:"Zuid-Afrika"}, ru:{city:"Кейптаун",country:"ЮАР"}, ja:{city:"ケープタウン",country:"南アフリカ"}, zh:{city:"开普敦",country:"南非"},
+          ko:{city:"케이프타운",country:"남아프리카공화국"}, ar:{city:"كيب تاون",country:"جنوب أفريقيا"}, hi:{city:"केप टाउन",country:"दक्षिण अफ्रीका"}, tr:{city:"Cape Town",country:"Güney Afrika"}, pl:{city:"Kapsztad",country:"Republika Południowej Afryki"},
+          sv:{city:"Kapstaden",country:"Sydafrika"}, no:{city:"Cape Town",country:"Sør-Afrika"}, da:{city:"Cape Town",country:"Sydafrika"}, fi:{city:"Kapkaupunki",country:"Etelä-Afrikka"}, el:{city:"Κέιπ Τάουν",country:"Νότια Αφρική"},
+          cs:{city:"Kapské Město",country:"Jižní Afrika"}, hu:{city:"Fokváros",country:"Dél-Afrika"}, ro:{city:"Cape Town",country:"Africa de Sud"}, uk:{city:"Кейптаун",country:"ПАР"}, vi:{city:"Cape Town",country:"Nam Phi"} } },
+  { lat:19.0760, lon:72.8777, tz:"Asia/Kolkata",
+    i18n:{ pt:{city:"Mumbai",country:"Índia"}, en:{city:"Mumbai",country:"India"}, es:{city:"Mumbái",country:"India"}, fr:{city:"Mumbai",country:"Inde"}, de:{city:"Mumbai",country:"Indien"},
+          it:{city:"Mumbai",country:"India"}, nl:{city:"Mumbai",country:"India"}, ru:{city:"Мумбаи",country:"Индия"}, ja:{city:"ムンバイ",country:"インド"}, zh:{city:"孟买",country:"印度"},
+          ko:{city:"뭄바이",country:"인도"}, ar:{city:"مومباي",country:"الهند"}, hi:{city:"मुंबई",country:"भारत"}, tr:{city:"Mumbai",country:"Hindistan"}, pl:{city:"Mumbaj",country:"Indie"},
+          sv:{city:"Mumbai",country:"Indien"}, no:{city:"Mumbai",country:"India"}, da:{city:"Mumbai",country:"Indien"}, fi:{city:"Mumbai",country:"Intia"}, el:{city:"Μουμπάι",country:"Ινδία"},
+          cs:{city:"Bombaj",country:"Indie"}, hu:{city:"Mumbai",country:"India"}, ro:{city:"Mumbai",country:"India"}, uk:{city:"Мумбаї",country:"Індія"}, vi:{city:"Mumbai",country:"Ấn Độ"} } },
+  { lat:39.9042, lon:116.4074, tz:"Asia/Shanghai",
+    i18n:{ pt:{city:"Pequim",country:"China"}, en:{city:"Beijing",country:"China"}, es:{city:"Pekín",country:"China"}, fr:{city:"Pékin",country:"Chine"}, de:{city:"Peking",country:"China"},
+          it:{city:"Pechino",country:"Cina"}, nl:{city:"Peking",country:"China"}, ru:{city:"Пекин",country:"Китай"}, ja:{city:"北京",country:"中国"}, zh:{city:"北京",country:"中国"},
+          ko:{city:"베이징",country:"중국"}, ar:{city:"بكين",country:"الصين"}, hi:{city:"बीजिंग",country:"चीन"}, tr:{city:"Pekin",country:"Çin"}, pl:{city:"Pekin",country:"Chiny"},
+          sv:{city:"Peking",country:"Kina"}, no:{city:"Beijing",country:"Kina"}, da:{city:"Beijing",country:"Kina"}, fi:{city:"Peking",country:"Kiina"}, el:{city:"Πεκίνο",country:"Κίνα"},
+          cs:{city:"Peking",country:"Čína"}, hu:{city:"Peking",country:"Kína"}, ro:{city:"Beijing",country:"China"}, uk:{city:"Пекін",country:"Китай"}, vi:{city:"Bắc Kinh",country:"Trung Quốc"} } },
+  { lat:-54.8019, lon:-68.3030, tz:"America/Argentina/Ushuaia",
+    i18n:{ pt:{city:"Ushuaia",country:"Argentina"}, en:{city:"Ushuaia",country:"Argentina"}, es:{city:"Ushuaia",country:"Argentina"}, fr:{city:"Ushuaïa",country:"Argentine"}, de:{city:"Ushuaia",country:"Argentinien"},
+          it:{city:"Ushuaia",country:"Argentina"}, nl:{city:"Ushuaia",country:"Argentinië"}, ru:{city:"Ушуая",country:"Аргентина"}, ja:{city:"ウスワイア",country:"アルゼンチン"}, zh:{city:"乌斯怀亚",country:"阿根廷"},
+          ko:{city:"우수아이아",country:"아르헨티나"}, ar:{city:"أوشوايا",country:"الأرجنتين"}, hi:{city:"उशुआइया",country:"अर्जेंटीना"}, tr:{city:"Ushuaia",country:"Arjantin"}, pl:{city:"Ushuaia",country:"Argentyna"},
+          sv:{city:"Ushuaia",country:"Argentina"}, no:{city:"Ushuaia",country:"Argentina"}, da:{city:"Ushuaia",country:"Argentina"}, fi:{city:"Ushuaia",country:"Argentiina"}, el:{city:"Ουσουάια",country:"Αργεντινή"},
+          cs:{city:"Ušuaia",country:"Argentina"}, hu:{city:"Ushuaia",country:"Argentína"}, ro:{city:"Ushuaia",country:"Argentina"}, uk:{city:"Ушуая",country:"Аргентина"}, vi:{city:"Ushuaia",country:"Argentina"} } },
+  { lat:24.7136, lon:46.6753, tz:"Asia/Riyadh",
+    i18n:{ pt:{city:"Riade",country:"Arábia Saudita"}, en:{city:"Riyadh",country:"Saudi Arabia"}, es:{city:"Riad",country:"Arabia Saudita"}, fr:{city:"Riyad",country:"Arabie saoudite"}, de:{city:"Riad",country:"Saudi-Arabien"},
+          it:{city:"Riyadh",country:"Arabia Saudita"}, nl:{city:"Riyad",country:"Saoedi-Arabië"}, ru:{city:"Эр-Рияд",country:"Саудовская Аравия"}, ja:{city:"リヤド",country:"サウジアラビア"}, zh:{city:"利雅得",country:"沙特阿拉伯"},
+          ko:{city:"리야드",country:"사우디아라비아"}, ar:{city:"الرياض",country:"السعودية"}, hi:{city:"रियाद",country:"सऊदी अरब"}, tr:{city:"Riyad",country:"Suudi Arabistan"}, pl:{city:"Rijad",country:"Arabia Saudyjska"},
+          sv:{city:"Riyadh",country:"Saudiarabien"}, no:{city:"Riyadh",country:"Saudi-Arabia"}, da:{city:"Riyadh",country:"Saudi-Arabien"}, fi:{city:"Riad",country:"Saudi-Arabia"}, el:{city:"Ριάντ",country:"Σαουδική Αραβία"},
+          cs:{city:"Rijád",country:"Saúdská Arábie"}, hu:{city:"Rijád",country:"Szaúd-Arábia"}, ro:{city:"Riad",country:"Arabia Saudită"}, uk:{city:"Ер-Ріяд",country:"Саудівська Аравія"}, vi:{city:"Riyadh",country:"Ả Rập Xê Út"} } },
+  { lat:64.1836, lon:-51.7214, tz:"America/Nuuk",
+    i18n:{ pt:{city:"Nuuk",country:"Groenlândia"}, en:{city:"Nuuk",country:"Greenland"}, es:{city:"Nuuk",country:"Groenlandia"}, fr:{city:"Nuuk",country:"Groenland"}, de:{city:"Nuuk",country:"Grönland"},
+          it:{city:"Nuuk",country:"Groenlandia"}, nl:{city:"Nuuk",country:"Groenland"}, ru:{city:"Нуук",country:"Гренландия"}, ja:{city:"ヌーク",country:"グリーンランド"}, zh:{city:"努克",country:"格陵兰"},
+          ko:{city:"누크",country:"그린란드"}, ar:{city:"نوك",country:"غرينلاند"}, hi:{city:"नुउक",country:"ग्रीनलैंड"}, tr:{city:"Nuuk",country:"Grönland"}, pl:{city:"Nuuk",country:"Grenlandia"},
+          sv:{city:"Nuuk",country:"Grönland"}, no:{city:"Nuuk",country:"Grønland"}, da:{city:"Nuuk",country:"Grønland"}, fi:{city:"Nuuk",country:"Grönlanti"}, el:{city:"Νουκ",country:"Γροιλανδία"},
+          cs:{city:"Nuuk",country:"Grónsko"}, hu:{city:"Nuuk",country:"Grönland"}, ro:{city:"Nuuk",country:"Groenlanda"}, uk:{city:"Нуук",country:"Гренландія"}, vi:{city:"Nuuk",country:"Greenland"} } },
+  { lat:1.3521, lon:103.8198, tz:"Asia/Singapore",
+    i18n:{ pt:{city:"Singapura",country:"Singapura"}, en:{city:"Singapore",country:"Singapore"}, es:{city:"Singapur",country:"Singapur"}, fr:{city:"Singapour",country:"Singapour"}, de:{city:"Singapur",country:"Singapur"},
+          it:{city:"Singapore",country:"Singapore"}, nl:{city:"Singapore",country:"Singapore"}, ru:{city:"Сингапур",country:"Сингапур"}, ja:{city:"シンガポール",country:"シンガポール"}, zh:{city:"新加坡",country:"新加坡"},
+          ko:{city:"싱가포르",country:"싱가포르"}, ar:{city:"سنغافورة",country:"سنغافورة"}, hi:{city:"सिंगापुर",country:"सिंगापुर"}, tr:{city:"Singapur",country:"Singapur"}, pl:{city:"Singapur",country:"Singapur"},
+          sv:{city:"Singapore",country:"Singapore"}, no:{city:"Singapore",country:"Singapore"}, da:{city:"Singapore",country:"Singapore"}, fi:{city:"Singapore",country:"Singapore"}, el:{city:"Σιγκαπούρη",country:"Σιγκαπούρη"},
+          cs:{city:"Singapur",country:"Singapur"}, hu:{city:"Szingapúr",country:"Szingapúr"}, ro:{city:"Singapore",country:"Singapore"}, uk:{city:"Сінгапур",country:"Сінгапур"}, vi:{city:"Singapore",country:"Singapore"} } },
+];
+
+const UI = {
+  pt:{ wind:"Vento", precipitation:"Precipitação", location:"Localização",
+       feelsLike:v=>`Sensação de ${v}°`, humidity:v=>`umidade ${v}%`, localTime:t=>`${t} (hora local)`,
+       hintCity:"PARA TROCAR DE CIDADE", hintUnit:u=>`PARA MUDAR PARA ${u}`, hintLang:"PARA MUDAR O IDIOMA",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"falha ao carregar clima", loading:"carregando…",
+       lon:{pos:"L",neg:"O"} },
+  en:{ wind:"Wind", precipitation:"Precipitation", location:"Location",
+       feelsLike:v=>`Feels like ${v}°`, humidity:v=>`humidity ${v}%`, localTime:t=>`${t} (local time)`,
+       hintCity:"TO CHANGE CITY", hintUnit:u=>`TO CHANGE TO ${u}`, hintLang:"TO CHANGE LANGUAGE",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"failed to load weather", loading:"loading…",
+       lon:{pos:"E",neg:"W"} },
+  es:{ wind:"Viento", precipitation:"Precipitación", location:"Ubicación",
+       feelsLike:v=>`Sensación de ${v}°`, humidity:v=>`humedad ${v}%`, localTime:t=>`${t} (hora local)`,
+       hintCity:"PARA CAMBIAR DE CIUDAD", hintUnit:u=>`PARA CAMBIAR A ${u}`, hintLang:"PARA CAMBIAR EL IDIOMA",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"no se pudo cargar el clima", loading:"cargando…",
+       lon:{pos:"E",neg:"O"} },
+  fr:{ wind:"Vent", precipitation:"Précipitations", location:"Localisation",
+       feelsLike:v=>`Ressenti ${v}°`, humidity:v=>`humidité ${v}%`, localTime:t=>`${t} (heure locale)`,
+       hintCity:"POUR CHANGER DE VILLE", hintUnit:u=>`POUR PASSER EN ${u}`, hintLang:"POUR CHANGER DE LANGUE",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"échec du chargement de la météo", loading:"chargement…",
+       lon:{pos:"E",neg:"O"} },
+  de:{ wind:"Wind", precipitation:"Niederschlag", location:"Standort",
+       feelsLike:v=>`Gefühlt ${v}°`, humidity:v=>`Luftfeuchtigkeit ${v}%`, localTime:t=>`${t} (Ortszeit)`,
+       hintCity:"UM DIE STADT ZU WECHSELN", hintUnit:u=>`UM ZU ${u} ZU WECHSELN`, hintLang:"UM DIE SPRACHE ZU WECHSELN",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"Wetter konnte nicht geladen werden", loading:"lädt…",
+       lon:{pos:"O",neg:"W"} },
+  it:{ wind:"Vento", precipitation:"Precipitazioni", location:"Posizione",
+       feelsLike:v=>`Percepita ${v}°`, humidity:v=>`umidità ${v}%`, localTime:t=>`${t} (ora locale)`,
+       hintCity:"PER CAMBIARE CITTÀ", hintUnit:u=>`PER PASSARE A ${u}`, hintLang:"PER CAMBIARE LINGUA",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"impossibile caricare il meteo", loading:"caricamento…",
+       lon:{pos:"E",neg:"O"} },
+  nl:{ wind:"Wind", precipitation:"Neerslag", location:"Locatie",
+       feelsLike:v=>`Voelt als ${v}°`, humidity:v=>`luchtvochtigheid ${v}%`, localTime:t=>`${t} (lokale tijd)`,
+       hintCity:"OM VAN STAD TE WISSELEN", hintUnit:u=>`OM NAAR ${u} TE WISSELEN`, hintLang:"OM VAN TAAL TE WISSELEN",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"weer laden mislukt", loading:"laden…",
+       lon:{pos:"O",neg:"W"} },
+  ru:{ wind:"Ветер", precipitation:"Осадки", location:"Местоположение",
+       feelsLike:v=>`Ощущается как ${v}°`, humidity:v=>`влажность ${v}%`, localTime:t=>`${t} (местное время)`,
+       hintCity:"ЧТОБЫ СМЕНИТЬ ГОРОД", hintUnit:u=>`ЧТОБЫ ПЕРЕЙТИ НА ${u}`, hintLang:"ЧТОБЫ СМЕНИТЬ ЯЗЫК",
+       unitName:{C:"ЦЕЛЬСИЙ",F:"ФАРЕНГЕЙТ"}, failLoad:"не удалось загрузить погоду", loading:"загрузка…",
+       lon:{pos:"В",neg:"З"} },
+  ja:{ wind:"風", precipitation:"降水量", location:"位置",
+       feelsLike:v=>`体感 ${v}°`, humidity:v=>`湿度 ${v}%`, localTime:t=>`${t}（現地時間）`,
+       hintCity:"都市を変更", hintUnit:u=>`${u}に切り替え`, hintLang:"言語を変更",
+       unitName:{C:"摂氏",F:"華氏"}, failLoad:"天気を読み込めませんでした", loading:"読み込み中…",
+       lon:{pos:"東",neg:"西"} },
+  zh:{ wind:"风力", precipitation:"降水量", location:"位置",
+       feelsLike:v=>`体感温度 ${v}°`, humidity:v=>`湿度 ${v}%`, localTime:t=>`${t}（当地时间）`,
+       hintCity:"切换城市", hintUnit:u=>`切换到${u}`, hintLang:"切换语言",
+       unitName:{C:"摄氏度",F:"华氏度"}, failLoad:"天气加载失败", loading:"加载中…",
+       lon:{pos:"东",neg:"西"} },
+  ko:{ wind:"바람", precipitation:"강수량", location:"위치",
+       feelsLike:v=>`체감 ${v}°`, humidity:v=>`습도 ${v}%`, localTime:t=>`${t} (현지 시간)`,
+       hintCity:"도시 변경", hintUnit:u=>`${u}로 전환`, hintLang:"언어 변경",
+       unitName:{C:"섭씨",F:"화씨"}, failLoad:"날씨를 불러오지 못했습니다", loading:"로딩 중…",
+       lon:{pos:"동",neg:"서"} },
+  ar:{ wind:"الرياح", precipitation:"الهطول", location:"الموقع",
+       feelsLike:v=>`الإحساس ${v}°`, humidity:v=>`الرطوبة ${v}%`, localTime:t=>`${t} (التوقيت المحلي)`,
+       hintCity:"لتغيير المدينة", hintUnit:u=>`للتحويل إلى ${u}`, hintLang:"لتغيير اللغة",
+       unitName:{C:"مئوية",F:"فهرنهايت"}, failLoad:"تعذّر تحميل الطقس", loading:"جارٍ التحميل…",
+       lon:{pos:"شرق",neg:"غرب"} },
+  hi:{ wind:"हवा", precipitation:"वर्षा", location:"स्थान",
+       feelsLike:v=>`महसूस ${v}°`, humidity:v=>`नमी ${v}%`, localTime:t=>`${t} (स्थानीय समय)`,
+       hintCity:"शहर बदलने के लिए", hintUnit:u=>`${u} में बदलने के लिए`, hintLang:"भाषा बदलने के लिए",
+       unitName:{C:"सेल्सियस",F:"फ़ारेनहाइट"}, failLoad:"मौसम लोड नहीं हो सका", loading:"लोड हो रहा है…",
+       lon:{pos:"पूर्व",neg:"पश्चिम"} },
+  tr:{ wind:"Rüzgar", precipitation:"Yağış", location:"Konum",
+       feelsLike:v=>`Hissedilen ${v}°`, humidity:v=>`nem %${v}`, localTime:t=>`${t} (yerel saat)`,
+       hintCity:"ŞEHRİ DEĞİŞTİRMEK İÇİN", hintUnit:u=>`${u}'A GEÇMEK İÇİN`, hintLang:"DİLİ DEĞİŞTİRMEK İÇİN",
+       unitName:{C:"SANTİGRAT",F:"FAHRENHEİT"}, failLoad:"hava durumu yüklenemedi", loading:"yükleniyor…",
+       lon:{pos:"D",neg:"B"} },
+  pl:{ wind:"Wiatr", precipitation:"Opady", location:"Lokalizacja",
+       feelsLike:v=>`Odczuwalna ${v}°`, humidity:v=>`wilgotność ${v}%`, localTime:t=>`${t} (czas lokalny)`,
+       hintCity:"ABY ZMIENIĆ MIASTO", hintUnit:u=>`ABY PRZEŁĄCZYĆ NA ${u}`, hintLang:"ABY ZMIENIĆ JĘZYK",
+       unitName:{C:"CELSJUSZA",F:"FAHRENHEITA"}, failLoad:"nie udało się wczytać pogody", loading:"wczytywanie…",
+       lon:{pos:"E",neg:"W"} },
+  sv:{ wind:"Vind", precipitation:"Nederbörd", location:"Plats",
+       feelsLike:v=>`Känns som ${v}°`, humidity:v=>`luftfuktighet ${v}%`, localTime:t=>`${t} (lokal tid)`,
+       hintCity:"FÖR ATT BYTA STAD", hintUnit:u=>`FÖR ATT BYTA TILL ${u}`, hintLang:"FÖR ATT BYTA SPRÅK",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"det gick inte att läsa in vädret", loading:"läser in…",
+       lon:{pos:"O",neg:"V"} },
+  no:{ wind:"Vind", precipitation:"Nedbør", location:"Plassering",
+       feelsLike:v=>`Føles som ${v}°`, humidity:v=>`luftfuktighet ${v}%`, localTime:t=>`${t} (lokal tid)`,
+       hintCity:"FOR Å BYTTE BY", hintUnit:u=>`FOR Å BYTTE TIL ${u}`, hintLang:"FOR Å BYTTE SPRÅK",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"kunne ikke laste inn været", loading:"laster…",
+       lon:{pos:"Ø",neg:"V"} },
+  da:{ wind:"Vind", precipitation:"Nedbør", location:"Placering",
+       feelsLike:v=>`Føles som ${v}°`, humidity:v=>`luftfugtighed ${v}%`, localTime:t=>`${t} (lokal tid)`,
+       hintCity:"FOR AT SKIFTE BY", hintUnit:u=>`FOR AT SKIFTE TIL ${u}`, hintLang:"FOR AT SKIFTE SPROG",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"vejret kunne ikke indlæses", loading:"indlæser…",
+       lon:{pos:"Ø",neg:"V"} },
+  fi:{ wind:"Tuuli", precipitation:"Sademäärä", location:"Sijainti",
+       feelsLike:v=>`Tuntuu kuin ${v}°`, humidity:v=>`kosteus ${v}%`, localTime:t=>`${t} (paikallinen aika)`,
+       hintCity:"VAIHTAAKSESI KAUPUNKIA", hintUnit:u=>`VAIHTAAKSESI ${u}:EEN`, hintLang:"VAIHTAAKSESI KIELTÄ",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"säätä ei voitu ladata", loading:"ladataan…",
+       lon:{pos:"I",neg:"L"} },
+  el:{ wind:"Άνεμος", precipitation:"Βροχόπτωση", location:"Τοποθεσία",
+       feelsLike:v=>`Αίσθηση ${v}°`, humidity:v=>`υγρασία ${v}%`, localTime:t=>`${t} (τοπική ώρα)`,
+       hintCity:"ΓΙΑ ΑΛΛΑΓΗ ΠΟΛΗΣ", hintUnit:u=>`ΓΙΑ ΑΛΛΑΓΗ ΣΕ ${u}`, hintLang:"ΓΙΑ ΑΛΛΑΓΗ ΓΛΩΣΣΑΣ",
+       unitName:{C:"ΚΕΛΣΙΟΥ",F:"ΦΑΡΕΝΑΪΤ"}, failLoad:"ο καιρός δεν φορτώθηκε", loading:"φόρτωση…",
+       lon:{pos:"Α",neg:"Δ"} },
+  cs:{ wind:"Vítr", precipitation:"Srážky", location:"Poloha",
+       feelsLike:v=>`Pocitově ${v}°`, humidity:v=>`vlhkost ${v}%`, localTime:t=>`${t} (místní čas)`,
+       hintCity:"PRO ZMĚNU MĚSTA", hintUnit:u=>`PRO PŘEPNUTÍ NA ${u}`, hintLang:"PRO ZMĚNU JAZYKA",
+       unitName:{C:"CELSIA",F:"FAHRENHEITA"}, failLoad:"počasí se nepodařilo načíst", loading:"načítání…",
+       lon:{pos:"V",neg:"Z"} },
+  hu:{ wind:"Szél", precipitation:"Csapadék", location:"Helyszín",
+       feelsLike:v=>`Hőérzet ${v}°`, humidity:v=>`páratartalom ${v}%`, localTime:t=>`${t} (helyi idő)`,
+       hintCity:"VÁROS VÁLTÁSHOZ", hintUnit:u=>`${u}-RA VÁLTÁSHOZ`, hintLang:"NYELV VÁLTÁSHOZ",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"nem sikerült betölteni az időjárást", loading:"betöltés…",
+       lon:{pos:"K",neg:"NY"} },
+  ro:{ wind:"Vânt", precipitation:"Precipitații", location:"Locație",
+       feelsLike:v=>`Se simte ca ${v}°`, humidity:v=>`umiditate ${v}%`, localTime:t=>`${t} (ora locală)`,
+       hintCity:"PENTRU A SCHIMBA ORAȘUL", hintUnit:u=>`PENTRU A TRECE LA ${u}`, hintLang:"PENTRU A SCHIMBA LIMBA",
+       unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"vremea nu a putut fi încărcată", loading:"se încarcă…",
+       lon:{pos:"E",neg:"V"} },
+  uk:{ wind:"Вітер", precipitation:"Опади", location:"Розташування",
+       feelsLike:v=>`Відчувається як ${v}°`, humidity:v=>`вологість ${v}%`, localTime:t=>`${t} (місцевий час)`,
+       hintCity:"ЩОБ ЗМІНИТИ МІСТО", hintUnit:u=>`ЩОБ ПЕРЕЙТИ НА ${u}`, hintLang:"ЩОБ ЗМІНИТИ МОВУ",
+       unitName:{C:"ЦЕЛЬСІЯ",F:"ФАРЕНГЕЙТА"}, failLoad:"не вдалося завантажити погоду", loading:"завантаження…",
+       lon:{pos:"Сх",neg:"Зх"} },
+  vi:{ wind:"Gió", precipitation:"Lượng mưa", location:"Vị trí",
+       feelsLike:v=>`Cảm giác như ${v}°`, humidity:v=>`độ ẩm ${v}%`, localTime:t=>`${t} (giờ địa phương)`,
+       hintCity:"ĐỂ ĐỔI THÀNH PHỐ", hintUnit:u=>`ĐỂ CHUYỂN SANG ${u}`, hintLang:"ĐỂ ĐỔI NGÔN NGỮ",
+       unitName:{C:"ĐỘ C",F:"ĐỘ F"}, failLoad:"không thể tải thời tiết", loading:"đang tải…",
+       lon:{pos:"Đ",neg:"T"} },
+};
+
+const COMPASS = {
+  pt:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"],
+  en:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"],
+  es:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"],
+  fr:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"],
+  de:["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"],
+  it:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"],
+  nl:["N","NNO","NO","ONO","O","OZO","ZO","ZZO","Z","ZZW","ZW","WZW","W","WNW","NW","NNW"],
+  ru:["С","ССВ","СВ","ВСВ","В","ВЮВ","ЮВ","ЮЮВ","Ю","ЮЮЗ","ЮЗ","ЗЮЗ","З","ЗСЗ","СЗ","ССЗ"],
+  ja:["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"],
+  zh:["北","北北东","东北","东北东","东","东南东","东南","南南东","南","南南西","西南","西南西","西","西北西","西北","北北西"],
+  ko:["북","북북동","북동","동북동","동","동남동","남동","남남동","남","남남서","남서","서남서","서","서북서","북서","북북서"],
+  ar:["ش","ش ش ق","ش ق","ق ش ق","ق","ق ج ق","ج ق","ج ج ق","ج","ج ج غ","ج غ","غ ج غ","غ","غ ش غ","ش غ","ش ش غ"],
+  hi:["उत्तर","उत्तर-उत्तरपूर्व","उत्तरपूर्व","पूर्व-उत्तरपूर्व","पूर्व","पूर्व-दक्षिणपूर्व","दक्षिणपूर्व","दक्षिण-दक्षिणपूर्व","दक्षिण","दक्षिण-दक्षिणपश्चिम","दक्षिणपश्चिम","पश्चिम-दक्षिणपश्चिम","पश्चिम","पश्चिम-उत्तरपश्चिम","उत्तरपश्चिम","उत्तर-उत्तरपश्चिम"],
+  tr:["K","KKD","KD","DKD","D","DGD","GD","GGD","G","GGB","GB","BGB","B","BKB","KB","KKB"],
+  pl:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"],
+  sv:["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSV","SV","VSV","V","VNV","NV","NNV"],
+  no:["N","NNØ","NØ","ØNØ","Ø","ØSØ","SØ","SSØ","S","SSV","SV","VSV","V","VNV","NV","NNV"],
+  da:["N","NNØ","NØ","ØNØ","Ø","ØSØ","SØ","SSØ","S","SSV","SV","VSV","V","VNV","NV","NNV"],
+  fi:["N","NNI","NI","INI","I","ISI","SI","SSI","S","SSL","SL","LSL","L","LNL","NL","NNL"],
+  el:["Β","ΒΒΑ","ΒΑ","ΑΒΑ","Α","ΑΝΑ","ΝΑ","ΝΝΑ","Ν","ΝΝΔ","ΝΔ","ΔΝΔ","Δ","ΔΒΔ","ΒΔ","ΒΒΔ"],
+  cs:["S","SSV","SV","VSV","V","VJV","JV","JJV","J","JJZ","JZ","ZJZ","Z","ZSZ","SZ","SSZ"],
+  hu:["É","ÉÉK","ÉK","KÉK","K","KDK","DK","DDK","D","DDNY","DNY","NYDNY","NY","NYÉNY","ÉNY","ÉÉNY"],
+  ro:["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSV","SV","VSV","V","VNV","NV","NNV"],
+  uk:["Пн","ПнПнСх","ПнСх","СхПнСх","Сх","СхПдСх","ПдСх","ПдПдСх","Пд","ПдПдЗх","ПдЗх","ЗхПдЗх","Зх","ЗхПнЗх","ПнЗх","ПнПнЗх"],
+  vi:["B","BBĐ","BĐ","ĐBĐ","Đ","ĐNĐ","NĐ","NNĐ","N","NNT","NT","TNT","T","TBT","BT","BBT"],
+};
+
+const WEATHER_LABELS = {
+  pt:{ clear:"Céu limpo", fewClouds:"Poucas nuvens", partlyCloudy:"Parcialmente nublado", cloudy:"Nublado", fog:"Nevoeiro",
+       drizzleLight:"Garoa fraca", drizzle:"Garoa", drizzleHeavy:"Garoa forte", freezingDrizzle:"Garoa congelante",
+       rainLight:"Chuva fraca", rain:"Chuva", rainHeavy:"Chuva forte", freezingRain:"Chuva congelante",
+       snowLight:"Neve fraca", snow:"Neve", snowHeavy:"Neve forte", snowGrains:"Grãos de neve",
+       showers:"Pancadas de chuva", showersHeavy:"Pancadas fortes", snowShowers:"Pancadas de neve",
+       thunderstorm:"Trovoada", thunderstormHail:"Trovoada com granizo" },
+  en:{ clear:"Clear sky", fewClouds:"Few clouds", partlyCloudy:"Partly cloudy", cloudy:"Cloudy", fog:"Fog",
+       drizzleLight:"Light drizzle", drizzle:"Drizzle", drizzleHeavy:"Heavy drizzle", freezingDrizzle:"Freezing drizzle",
+       rainLight:"Light rain", rain:"Rain", rainHeavy:"Heavy rain", freezingRain:"Freezing rain",
+       snowLight:"Light snow", snow:"Snow", snowHeavy:"Heavy snow", snowGrains:"Snow grains",
+       showers:"Rain showers", showersHeavy:"Heavy showers", snowShowers:"Snow showers",
+       thunderstorm:"Thunderstorm", thunderstormHail:"Thunderstorm with hail" },
+  es:{ clear:"Cielo despejado", fewClouds:"Pocas nubes", partlyCloudy:"Parcialmente nublado", cloudy:"Nublado", fog:"Niebla",
+       drizzleLight:"Llovizna débil", drizzle:"Llovizna", drizzleHeavy:"Llovizna fuerte", freezingDrizzle:"Llovizna helada",
+       rainLight:"Lluvia débil", rain:"Lluvia", rainHeavy:"Lluvia fuerte", freezingRain:"Lluvia helada",
+       snowLight:"Nieve débil", snow:"Nieve", snowHeavy:"Nieve fuerte", snowGrains:"Granos de nieve",
+       showers:"Chubascos", showersHeavy:"Chubascos fuertes", snowShowers:"Chubascos de nieve",
+       thunderstorm:"Tormenta", thunderstormHail:"Tormenta con granizo" },
+  fr:{ clear:"Ciel dégagé", fewClouds:"Quelques nuages", partlyCloudy:"Partiellement nuageux", cloudy:"Nuageux", fog:"Brouillard",
+       drizzleLight:"Bruine légère", drizzle:"Bruine", drizzleHeavy:"Bruine forte", freezingDrizzle:"Bruine verglaçante",
+       rainLight:"Pluie légère", rain:"Pluie", rainHeavy:"Forte pluie", freezingRain:"Pluie verglaçante",
+       snowLight:"Neige légère", snow:"Neige", snowHeavy:"Neige forte", snowGrains:"Grains de neige",
+       showers:"Averses", showersHeavy:"Fortes averses", snowShowers:"Averses de neige",
+       thunderstorm:"Orage", thunderstormHail:"Orage avec grêle" },
+  de:{ clear:"Klarer Himmel", fewClouds:"Leicht bewölkt", partlyCloudy:"Teilweise bewölkt", cloudy:"Bewölkt", fog:"Nebel",
+       drizzleLight:"Leichter Nieselregen", drizzle:"Nieselregen", drizzleHeavy:"Starker Nieselregen", freezingDrizzle:"Gefrierender Nieselregen",
+       rainLight:"Leichter Regen", rain:"Regen", rainHeavy:"Starker Regen", freezingRain:"Gefrierender Regen",
+       snowLight:"Leichter Schnee", snow:"Schnee", snowHeavy:"Starker Schnee", snowGrains:"Schneegriesel",
+       showers:"Regenschauer", showersHeavy:"Starke Schauer", snowShowers:"Schneeschauer",
+       thunderstorm:"Gewitter", thunderstormHail:"Gewitter mit Hagel" },
+  it:{ clear:"Cielo sereno", fewClouds:"Poche nuvole", partlyCloudy:"Parzialmente nuvoloso", cloudy:"Nuvoloso", fog:"Nebbia",
+       drizzleLight:"Pioggerella leggera", drizzle:"Pioggerella", drizzleHeavy:"Pioggerella forte", freezingDrizzle:"Pioggerella gelata",
+       rainLight:"Pioggia leggera", rain:"Pioggia", rainHeavy:"Pioggia forte", freezingRain:"Pioggia gelata",
+       snowLight:"Neve leggera", snow:"Neve", snowHeavy:"Neve forte", snowGrains:"Granelli di neve",
+       showers:"Rovesci di pioggia", showersHeavy:"Rovesci forti", snowShowers:"Rovesci di neve",
+       thunderstorm:"Temporale", thunderstormHail:"Temporale con grandine" },
+  nl:{ clear:"Heldere hemel", fewClouds:"Enkele wolken", partlyCloudy:"Gedeeltelijk bewolkt", cloudy:"Bewolkt", fog:"Mist",
+       drizzleLight:"Lichte motregen", drizzle:"Motregen", drizzleHeavy:"Zware motregen", freezingDrizzle:"IJzel motregen",
+       rainLight:"Lichte regen", rain:"Regen", rainHeavy:"Zware regen", freezingRain:"IJzel",
+       snowLight:"Lichte sneeuw", snow:"Sneeuw", snowHeavy:"Zware sneeuw", snowGrains:"Sneeuwkorrels",
+       showers:"Regenbuien", showersHeavy:"Zware buien", snowShowers:"Sneeuwbuien",
+       thunderstorm:"Onweer", thunderstormHail:"Onweer met hagel" },
+  ru:{ clear:"Ясно", fewClouds:"Малооблачно", partlyCloudy:"Переменная облачность", cloudy:"Облачно", fog:"Туман",
+       drizzleLight:"Слабая морось", drizzle:"Морось", drizzleHeavy:"Сильная морось", freezingDrizzle:"Ледяная морось",
+       rainLight:"Небольшой дождь", rain:"Дождь", rainHeavy:"Сильный дождь", freezingRain:"Ледяной дождь",
+       snowLight:"Небольшой снег", snow:"Снег", snowHeavy:"Сильный снег", snowGrains:"Снежная крупа",
+       showers:"Ливень", showersHeavy:"Сильный ливень", snowShowers:"Снегопад",
+       thunderstorm:"Гроза", thunderstormHail:"Гроза с градом" },
+  ja:{ clear:"快晴", fewClouds:"晴れ", partlyCloudy:"薄曇り", cloudy:"曇り", fog:"霧",
+       drizzleLight:"弱い霧雨", drizzle:"霧雨", drizzleHeavy:"強い霧雨", freezingDrizzle:"着氷性の霧雨",
+       rainLight:"弱い雨", rain:"雨", rainHeavy:"強い雨", freezingRain:"着氷性の雨",
+       snowLight:"弱い雪", snow:"雪", snowHeavy:"強い雪", snowGrains:"細氷",
+       showers:"にわか雨", showersHeavy:"激しいにわか雨", snowShowers:"にわか雪",
+       thunderstorm:"雷雨", thunderstormHail:"雹を伴う雷雨" },
+  zh:{ clear:"晴朗", fewClouds:"少云", partlyCloudy:"局部多云", cloudy:"多云", fog:"雾",
+       drizzleLight:"小毛毛雨", drizzle:"毛毛雨", drizzleHeavy:"大毛毛雨", freezingDrizzle:"冻毛毛雨",
+       rainLight:"小雨", rain:"雨", rainHeavy:"大雨", freezingRain:"冻雨",
+       snowLight:"小雪", snow:"雪", snowHeavy:"大雪", snowGrains:"米雪",
+       showers:"阵雨", showersHeavy:"强阵雨", snowShowers:"阵雪",
+       thunderstorm:"雷暴", thunderstormHail:"雷暴伴冰雹" },
+  ko:{ clear:"맑음", fewClouds:"구름 조금", partlyCloudy:"부분적으로 흐림", cloudy:"흐림", fog:"안개",
+       drizzleLight:"약한 이슬비", drizzle:"이슬비", drizzleHeavy:"강한 이슬비", freezingDrizzle:"어는 이슬비",
+       rainLight:"약한 비", rain:"비", rainHeavy:"강한 비", freezingRain:"어는 비",
+       snowLight:"약한 눈", snow:"눈", snowHeavy:"강한 눈", snowGrains:"싸락눈",
+       showers:"소나기", showersHeavy:"강한 소나기", snowShowers:"소나기눈",
+       thunderstorm:"뇌우", thunderstormHail:"우박을 동반한 뇌우" },
+  ar:{ clear:"سماء صافية", fewClouds:"غيوم قليلة", partlyCloudy:"غائم جزئياً", cloudy:"غائم", fog:"ضباب",
+       drizzleLight:"رذاذ خفيف", drizzle:"رذاذ", drizzleHeavy:"رذاذ غزير", freezingDrizzle:"رذاذ متجمد",
+       rainLight:"مطر خفيف", rain:"مطر", rainHeavy:"مطر غزير", freezingRain:"مطر متجمد",
+       snowLight:"ثلج خفيف", snow:"ثلج", snowHeavy:"ثلج غزير", snowGrains:"حبيبات ثلجية",
+       showers:"زخات مطر", showersHeavy:"زخات مطر غزيرة", snowShowers:"زخات ثلجية",
+       thunderstorm:"عاصفة رعدية", thunderstormHail:"عاصفة رعدية مع برد" },
+  hi:{ clear:"साफ़ आसमान", fewClouds:"हल्के बादल", partlyCloudy:"आंशिक रूप से बादल", cloudy:"बादल छाए", fog:"कोहरा",
+       drizzleLight:"हल्की बूंदाबांदी", drizzle:"बूंदाबांदी", drizzleHeavy:"तेज़ बूंदाबांदी", freezingDrizzle:"जमने वाली बूंदाबांदी",
+       rainLight:"हल्की बारिश", rain:"बारिश", rainHeavy:"तेज़ बारिश", freezingRain:"जमने वाली बारिश",
+       snowLight:"हल्की बर्फ़", snow:"बर्फ़", snowHeavy:"तेज़ बर्फ़", snowGrains:"बर्फ़ के कण",
+       showers:"बौछारें", showersHeavy:"तेज़ बौछारें", snowShowers:"बर्फ़ की बौछारें",
+       thunderstorm:"आंधी-तूफ़ान", thunderstormHail:"ओलों के साथ तूफ़ान" },
+  tr:{ clear:"Açık", fewClouds:"Az bulutlu", partlyCloudy:"Parçalı bulutlu", cloudy:"Bulutlu", fog:"Sisli",
+       drizzleLight:"Hafif çisenti", drizzle:"Çisenti", drizzleHeavy:"Kuvvetli çisenti", freezingDrizzle:"Dondurucu çisenti",
+       rainLight:"Hafif yağmur", rain:"Yağmur", rainHeavy:"Kuvvetli yağmur", freezingRain:"Dondurucu yağmur",
+       snowLight:"Hafif kar", snow:"Kar", snowHeavy:"Kuvvetli kar", snowGrains:"Kar taneleri",
+       showers:"Sağanak yağmur", showersHeavy:"Kuvvetli sağanak", snowShowers:"Kar sağanağı",
+       thunderstorm:"Gök gürültülü fırtına", thunderstormHail:"Dolulu fırtına" },
+  pl:{ clear:"Bezchmurnie", fewClouds:"Lekkie zachmurzenie", partlyCloudy:"Częściowe zachmurzenie", cloudy:"Pochmurno", fog:"Mgła",
+       drizzleLight:"Słaba mżawka", drizzle:"Mżawka", drizzleHeavy:"Silna mżawka", freezingDrizzle:"Marznąca mżawka",
+       rainLight:"Słaby deszcz", rain:"Deszcz", rainHeavy:"Silny deszcz", freezingRain:"Marznący deszcz",
+       snowLight:"Słaby śnieg", snow:"Śnieg", snowHeavy:"Silny śnieg", snowGrains:"Śnieg ziarnisty",
+       showers:"Przelotny deszcz", showersHeavy:"Silne przelotne opady", snowShowers:"Przelotny śnieg",
+       thunderstorm:"Burza", thunderstormHail:"Burza z gradem" },
+  sv:{ clear:"Klart", fewClouds:"Lätt molnighet", partlyCloudy:"Delvis molnigt", cloudy:"Molnigt", fog:"Dimma",
+       drizzleLight:"Lätt duggregn", drizzle:"Duggregn", drizzleHeavy:"Kraftigt duggregn", freezingDrizzle:"Underkylt duggregn",
+       rainLight:"Lätt regn", rain:"Regn", rainHeavy:"Kraftigt regn", freezingRain:"Underkylt regn",
+       snowLight:"Lätt snöfall", snow:"Snö", snowHeavy:"Kraftigt snöfall", snowGrains:"Snökorn",
+       showers:"Regnskurar", showersHeavy:"Kraftiga skurar", snowShowers:"Snöbyar",
+       thunderstorm:"Åska", thunderstormHail:"Åska med hagel" },
+  no:{ clear:"Klarvær", fewClouds:"Lettskyet", partlyCloudy:"Delvis skyet", cloudy:"Skyet", fog:"Tåke",
+       drizzleLight:"Lett yr", drizzle:"Yr", drizzleHeavy:"Kraftig yr", freezingDrizzle:"Underkjølt yr",
+       rainLight:"Lett regn", rain:"Regn", rainHeavy:"Kraftig regn", freezingRain:"Underkjølt regn",
+       snowLight:"Lett snø", snow:"Snø", snowHeavy:"Kraftig snø", snowGrains:"Kornsnø",
+       showers:"Regnbyger", showersHeavy:"Kraftige byger", snowShowers:"Snøbyger",
+       thunderstorm:"Tordenvær", thunderstormHail:"Tordenvær med hagl" },
+  da:{ clear:"Klart vejr", fewClouds:"Let skyet", partlyCloudy:"Delvist skyet", cloudy:"Skyet", fog:"Tåge",
+       drizzleLight:"Let støvregn", drizzle:"Støvregn", drizzleHeavy:"Kraftig støvregn", freezingDrizzle:"Underafkølet støvregn",
+       rainLight:"Let regn", rain:"Regn", rainHeavy:"Kraftig regn", freezingRain:"Underafkølet regn",
+       snowLight:"Let sne", snow:"Sne", snowHeavy:"Kraftig sne", snowGrains:"Snekorn",
+       showers:"Regnbyger", showersHeavy:"Kraftige byger", snowShowers:"Snebyger",
+       thunderstorm:"Tordenvejr", thunderstormHail:"Tordenvejr med hagl" },
+  fi:{ clear:"Selkeää", fewClouds:"Melko selkeää", partlyCloudy:"Puolipilvistä", cloudy:"Pilvistä", fog:"Sumua",
+       drizzleLight:"Heikkoa tihkusadetta", drizzle:"Tihkusadetta", drizzleHeavy:"Voimakasta tihkusadetta", freezingDrizzle:"Jäätävää tihkua",
+       rainLight:"Heikkoa sadetta", rain:"Sadetta", rainHeavy:"Voimakasta sadetta", freezingRain:"Jäätävää sadetta",
+       snowLight:"Heikkoa lumisadetta", snow:"Lumisadetta", snowHeavy:"Voimakasta lumisadetta", snowGrains:"Lumijyväsiä",
+       showers:"Sadekuuroja", showersHeavy:"Voimakkaita kuuroja", snowShowers:"Lumikuuroja",
+       thunderstorm:"Ukkosta", thunderstormHail:"Ukkosta ja raekuuroja" },
+  el:{ clear:"Αίθριος καιρός", fewClouds:"Λίγα σύννεφα", partlyCloudy:"Μερική συννεφιά", cloudy:"Συννεφιά", fog:"Ομίχλη",
+       drizzleLight:"Ελαφριά ψιχάλα", drizzle:"Ψιχάλα", drizzleHeavy:"Δυνατή ψιχάλα", freezingDrizzle:"Παγωμένη ψιχάλα",
+       rainLight:"Ελαφριά βροχή", rain:"Βροχή", rainHeavy:"Δυνατή βροχή", freezingRain:"Παγωμένη βροχή",
+       snowLight:"Ελαφρύ χιόνι", snow:"Χιόνι", snowHeavy:"Δυνατό χιόνι", snowGrains:"Κόκκοι χιονιού",
+       showers:"Μπόρες", showersHeavy:"Δυνατές μπόρες", snowShowers:"Χιονόπτωση",
+       thunderstorm:"Καταιγίδα", thunderstormHail:"Καταιγίδα με χαλάζι" },
+  cs:{ clear:"Jasno", fewClouds:"Skoro jasno", partlyCloudy:"Polojasno", cloudy:"Zataženo", fog:"Mlha",
+       drizzleLight:"Slabé mrholení", drizzle:"Mrholení", drizzleHeavy:"Silné mrholení", freezingDrizzle:"Mrznoucí mrholení",
+       rainLight:"Slabý déšť", rain:"Déšť", rainHeavy:"Silný déšť", freezingRain:"Mrznoucí déšť",
+       snowLight:"Slabé sněžení", snow:"Sněžení", snowHeavy:"Silné sněžení", snowGrains:"Sněhová zrna",
+       showers:"Přeháňky", showersHeavy:"Silné přeháňky", snowShowers:"Sněhové přeháňky",
+       thunderstorm:"Bouřka", thunderstormHail:"Bouřka s kroupami" },
+  hu:{ clear:"Tiszta égbolt", fewClouds:"Kevés felhő", partlyCloudy:"Részben felhős", cloudy:"Felhős", fog:"Köd",
+       drizzleLight:"Gyenge szitálás", drizzle:"Szitálás", drizzleHeavy:"Erős szitálás", freezingDrizzle:"Fagyó szitálás",
+       rainLight:"Gyenge eső", rain:"Eső", rainHeavy:"Erős eső", freezingRain:"Fagyó eső",
+       snowLight:"Gyenge havazás", snow:"Havazás", snowHeavy:"Erős havazás", snowGrains:"Hószemcsék",
+       showers:"Zápor", showersHeavy:"Erős zápor", snowShowers:"Hózápor",
+       thunderstorm:"Zivatar", thunderstormHail:"Jégesős zivatar" },
+  ro:{ clear:"Cer senin", fewClouds:"Puțin înnorat", partlyCloudy:"Parțial înnorat", cloudy:"Înnorat", fog:"Ceață",
+       drizzleLight:"Burniță slabă", drizzle:"Burniță", drizzleHeavy:"Burniță puternică", freezingDrizzle:"Burniță înghețată",
+       rainLight:"Ploaie slabă", rain:"Ploaie", rainHeavy:"Ploaie puternică", freezingRain:"Ploaie înghețată",
+       snowLight:"Ninsoare slabă", snow:"Ninsoare", snowHeavy:"Ninsoare puternică", snowGrains:"Măzăriche de zăpadă",
+       showers:"Averse de ploaie", showersHeavy:"Averse puternice", snowShowers:"Averse de ninsoare",
+       thunderstorm:"Furtună", thunderstormHail:"Furtună cu grindină" },
+  uk:{ clear:"Ясно", fewClouds:"Малохмарно", partlyCloudy:"Мінлива хмарність", cloudy:"Хмарно", fog:"Туман",
+       drizzleLight:"Слабка мряка", drizzle:"Мряка", drizzleHeavy:"Сильна мряка", freezingDrizzle:"Крижана мряка",
+       rainLight:"Невеликий дощ", rain:"Дощ", rainHeavy:"Сильний дощ", freezingRain:"Крижаний дощ",
+       snowLight:"Невеликий сніг", snow:"Сніг", snowHeavy:"Сильний сніг", snowGrains:"Снігова крупа",
+       showers:"Зливи", showersHeavy:"Сильні зливи", snowShowers:"Снігопад",
+       thunderstorm:"Гроза", thunderstormHail:"Гроза з градом" },
+  vi:{ clear:"Trời quang", fewClouds:"Ít mây", partlyCloudy:"Có mây rải rác", cloudy:"Nhiều mây", fog:"Sương mù",
+       drizzleLight:"Mưa phùn nhẹ", drizzle:"Mưa phùn", drizzleHeavy:"Mưa phùn nặng", freezingDrizzle:"Mưa phùn đóng băng",
+       rainLight:"Mưa nhẹ", rain:"Mưa", rainHeavy:"Mưa to", freezingRain:"Mưa đóng băng",
+       snowLight:"Tuyết nhẹ", snow:"Tuyết", snowHeavy:"Tuyết dày", snowGrains:"Hạt tuyết",
+       showers:"Mưa rào", showersHeavy:"Mưa rào lớn", snowShowers:"Mưa tuyết rào",
+       thunderstorm:"Dông", thunderstormHail:"Dông kèm mưa đá" },
+};
+
+// shuffle once so each session gets a fresh random order
+for(let i=CITIES.length-1;i>0;i--){
+  const j = Math.floor(Math.random()*(i+1));
+  [CITIES[i],CITIES[j]]=[CITIES[j],CITIES[i]];
+}
+
+let idx = 0;
+let clockTimer = null;
+let refreshTimer = null;
+
+const el = {
+  city: document.getElementById("city"),
+  meta: document.getElementById("meta"),
+  temp: document.getElementById("temp"),
+  icon: document.getElementById("icon"),
+  condLabel: document.getElementById("condLabel"),
+  feels: document.getElementById("feels"),
+  windArrow: document.getElementById("windArrow"),
+  windSpeed: document.getElementById("windSpeed"),
+  windDir: document.getElementById("windDir"),
+  precip: document.getElementById("precip"),
+  humidity: document.getElementById("humidity"),
+  mapSvg: document.getElementById("mapSvg"),
+  coords: document.getElementById("coords"),
+  poster: document.getElementById("poster"),
+  titleWind: document.getElementById("titleWind"),
+  titlePrecip: document.getElementById("titlePrecip"),
+  titleLocation: document.getElementById("titleLocation"),
+  hintCity: document.getElementById("hintCity"),
+  hintUnit: document.getElementById("hintUnit"),
+  hintLang: document.getElementById("hintLang"),
+};
+
+// --- color: frio = azul forte, meio termo = amarelo, quente = vermelho ---
+function tempToBackground(t){
+  // straight blue->yellow RGB blending turns muddy grey/olive in the middle,
+  // so we route through a soft pale stop to keep every step vivid.
+  const COLD = [18, 68, 163];    // azul forte
+  const PALE = [222, 216, 192];  // transição neutra e clara (leve tom areia)
+  const MID  = [250, 200, 60];   // amarelo
+  const HOT  = [195, 35, 35];    // vermelho
+
+  const coldPoint = 3, palePoint = 11, midPoint = 19, hotPoint = 33;
+  let c;
+  if(t <= coldPoint) c = COLD;
+  else if(t >= hotPoint) c = HOT;
+  else if(t <= palePoint) c = lerpRGB(COLD, PALE, (t - coldPoint) / (palePoint - coldPoint));
+  else if(t <= midPoint) c = lerpRGB(PALE, MID, (t - palePoint) / (midPoint - palePoint));
+  else c = lerpRGB(MID, HOT, (t - midPoint) / (hotPoint - midPoint));
+
+  const c2 = c.map(v => Math.max(0, Math.min(255, Math.round(v*0.72))));
+  return `linear-gradient(160deg, rgb(${c.join(",")}) 0%, rgb(${c2.join(",")}) 100%)`;
+}
+function lerpRGB(a,b,f){ return [0,1,2].map(i => a[i] + (b[i]-a[i])*f); }
+
+// --- weather code -> icon + label key ---
+const WEATHER_ICONS = {
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"></circle><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"></path></svg>`,
+  cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 18a4 4 0 0 1-.5-7.97A5 5 0 0 1 15.9 8.1 4.5 4.5 0 0 1 17.5 18h-11z"></path></svg>`,
+  cloudSun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3v2M19.8 5.2l-1.4 1.4M4 13a4 4 0 0 0 .5 8h10a4 4 0 0 0 .3-8 5 5 0 0 0-9.6-1.5A4 4 0 0 0 4 13z"></path><circle cx="13" cy="9" r="3"></circle></svg>`,
+  rain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 15a4 4 0 0 1-.5-7.97A5 5 0 0 1 15.9 5.1 4.5 4.5 0 0 1 17.5 15h-11z"></path><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"></path></svg>`,
+  snow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 14a4 4 0 0 1-.5-7.97A5 5 0 0 1 15.9 4.1 4.5 4.5 0 0 1 17.5 14h-11z"></path><path d="M8 18v3M8 18l-1.7 1M8 18l1.7 1M16 18v3M16 18l-1.7 1M16 18l1.7 1"></path></svg>`,
+  storm: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 13a4 4 0 0 1-.5-7.97A5 5 0 0 1 15.9 3.1 4.5 4.5 0 0 1 17.5 13h-11z"></path><path d="M13 15l-3 4h3l-2 4"></path></svg>`,
+  fog: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M2 13h20M4 17h16"></path></svg>`,
+};
+
+const WEATHER_CODE_MAP = {
+  0:["sun","clear"], 1:["cloudSun","fewClouds"], 2:["cloudSun","partlyCloudy"], 3:["cloud","cloudy"],
+  45:["fog","fog"], 48:["fog","fog"],
+  51:["rain","drizzleLight"], 53:["rain","drizzle"], 55:["rain","drizzleHeavy"],
+  56:["rain","freezingDrizzle"], 57:["rain","freezingDrizzle"],
+  61:["rain","rainLight"], 63:["rain","rain"], 65:["rain","rainHeavy"],
+  66:["rain","freezingRain"], 67:["rain","freezingRain"],
+  71:["snow","snowLight"], 73:["snow","snow"], 75:["snow","snowHeavy"], 77:["snow","snowGrains"],
+  80:["rain","showers"], 81:["rain","showers"], 82:["rain","showersHeavy"],
+  85:["snow","snowShowers"], 86:["snow","snowShowers"],
+  95:["storm","thunderstorm"], 96:["storm","thunderstormHail"], 99:["storm","thunderstormHail"],
+};
+
+function weatherVisual(code, lang){
+  const [iconKey, labelKey] = WEATHER_CODE_MAP[code] || ["cloud", null];
+  const icon = WEATHER_ICONS[iconKey];
+  const label = labelKey ? WEATHER_LABELS[lang][labelKey] : "—";
+  return [icon, label];
+}
+
+function compass(deg, lang){
+  const dirs = COMPASS[lang];
+  return dirs[Math.round(deg/22.5) % 16];
+}
+
+function drawMap(lat, lon){
+  const w=200,h=100;
+  let lines = "";
+  for(let g=-150; g<=150; g+=30){
+    const x = (g+180)/360*w;
+    lines += `<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="rgba(255,255,255,0.16)" stroke-width="0.5"/>`;
+  }
+  for(let g=-60; g<=60; g+=30){
+    const y = (90-g)/180*h;
+    lines += `<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="rgba(255,255,255,0.16)" stroke-width="0.5"/>`;
+  }
+  lines += `<line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="rgba(255,255,255,0.32)" stroke-width="0.7"/>`;
+  lines += `<line x1="${w/2}" y1="0" x2="${w/2}" y2="${h}" stroke="rgba(255,255,255,0.32)" stroke-width="0.7"/>`;
+
+  const px = (lon+180)/360*w;
+  const py = (90-lat)/180*h;
+  const pin = `
+    <circle cx="${px}" cy="${py}" r="7" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1">
+      <animate attributeName="r" values="4;9;4" dur="2.6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0;0.8" dur="2.6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="${px}" cy="${py}" r="3.2" fill="#ffffff"/>
+  `;
+  el.mapSvg.innerHTML = lines + pin;
+}
+
+function fmtCoord(v, posLabel, negLabel){
+  return `${Math.abs(v).toFixed(2)}° ${v>=0?posLabel:negLabel}`;
+}
+
+function celsiusToF(c){ return c*9/5+32; }
+
+let lastCity = null;
+let lastCur = null;
+let loadFailed = false;
+let nowStr = "";
+
+function lang(){ return LANGS[langIdx]; }
+
+function startClock(city){
+  if(clockTimer) clearInterval(clockTimer);
+  const tick = () => {
+    nowStr = new Intl.DateTimeFormat("en-GB", {
+      timeZone: city.tz, hour:"2-digit", minute:"2-digit", hour12:false
+    }).format(new Date());
+    render();
+  };
+  tick();
+  clockTimer = setInterval(tick, 1000*15);
+}
+
+function render(){
+  if(!lastCity) return;
+  const t = UI[lang()];
+  const names = lastCity.i18n[lang()];
+
+  el.city.textContent = names.city;
+  el.meta.textContent = loadFailed ? `${names.country} · ${t.failLoad}` : `${names.country} · ${t.localTime(nowStr)}`;
+  el.coords.textContent = `${fmtCoord(lastCity.lat,"N","S")}, ${fmtCoord(lastCity.lon,t.lon.pos,t.lon.neg)}`;
+
+  el.titleWind.textContent = t.wind;
+  el.titlePrecip.textContent = t.precipitation;
+  el.titleLocation.textContent = t.location;
+
+  el.hintCity.textContent = t.hintCity;
+  el.hintUnit.textContent = t.hintUnit(t.unitName[unit === "C" ? "F" : "C"]);
+  el.hintLang.textContent = t.hintLang;
+
+  if(!lastCur) return;
+
+  const tempC = lastCur.temperature_2m;
+  const feelsC = lastCur.apparent_temperature;
+  const displayTemp = unit === "C" ? tempC : celsiusToF(tempC);
+  const displayFeels = unit === "C" ? feelsC : celsiusToF(feelsC);
+
+  el.poster.style.background = tempToBackground(tempC);
+  el.temp.innerHTML = `${Math.round(displayTemp)}<sup>°</sup>`;
+  el.feels.textContent = t.feelsLike(Math.round(displayFeels));
+
+  const [icon, label] = weatherVisual(lastCur.weather_code, lang());
+  el.icon.innerHTML = icon;
+  el.condLabel.textContent = label;
+
+  el.windSpeed.textContent = `${Math.round(lastCur.wind_speed_10m)} km/h`;
+  el.windDir.textContent = `${compass(lastCur.wind_direction_10m, lang())} · ${Math.round(lastCur.wind_direction_10m)}°`;
+  el.windArrow.style.transform = `rotate(${lastCur.wind_direction_10m}deg)`;
+
+  el.precip.textContent = `${lastCur.precipitation.toFixed(1)} mm`;
+  el.humidity.textContent = t.humidity(Math.round(lastCur.relative_humidity_2m));
+}
+
+async function loadCity(city){
+  lastCity = city;
+  lastCur = null;
+  loadFailed = false;
+  drawMap(city.lat, city.lon);
+  startClock(city);
+  render();
+
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m&timezone=${encodeURIComponent(city.tz)}`;
+
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error("network");
+    const data = await res.json();
+    lastCur = data.current;
+  }catch(err){
+    loadFailed = true;
+  }
+  render();
+}
+
+function next(){
+  idx = (idx + 1) % CITIES.length;
+  loadCity(CITIES[idx]);
+}
+
+function toggleUnit(){
+  unit = unit === "C" ? "F" : "C";
+  render();
+}
+
+function cycleLanguage(){
+  langIdx = (langIdx + 1) % LANGS.length;
+  render();
+}
+
+window.addEventListener("keydown", (e) => {
+  if(e.code === "Space"){
+    e.preventDefault();
+    next();
+  } else if(e.key === "Enter"){
+    e.preventDefault();
+    toggleUnit();
+  } else if(e.key && e.key.toLowerCase() === "w"){
+    cycleLanguage();
+  }
+});
+el.poster.addEventListener("click", next);
+
+loadCity(CITIES[idx]);
+if(refreshTimer) clearInterval(refreshTimer);
+refreshTimer = setInterval(() => loadCity(CITIES[idx]), 5*60*1000);
+</script>
+</body>
+</html>
