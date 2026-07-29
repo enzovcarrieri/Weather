@@ -26,10 +26,10 @@
     width:100%; height:100%;
   }
   #poster{
+    --poster-vh: 90vh;
     position:relative;
     aspect-ratio: 210 / 297;
-    height: 90vh;
-    max-width: 92vw;
+    width: min(92vw, calc(var(--poster-vh) * 0.7071));
     border-radius: 22px;
     overflow:hidden;
     box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 4px 20px rgba(0,0,0,0.4);
@@ -38,7 +38,7 @@
     display:flex; flex-direction:column;
   }
   /* tighter sizing for scripted screenshot exports (?export=1), so poster + hints fit with clean margins */
-  html.export-mode #poster{ height: 84vh; }
+  html.export-mode #poster{ --poster-vh: 84vh; }
   html.export-mode #stage{ gap: 26px; }
   /* decorative drifting atmosphere blobs for a "satellite/weather" feel */
   .blob{
@@ -120,6 +120,7 @@
     padding: 0 6% 7% 6%;
   }
   .card{
+    min-width: 0;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     backdrop-filter: blur(22px) saturate(150%);
@@ -135,17 +136,20 @@
     letter-spacing: 0.06em;
     color: var(--text-dim);
     font-weight: 600;
+    overflow-wrap: break-word;
   }
   .card .card-main{
     display:flex; align-items:center; gap:8px;
     font-size: clamp(16px,3vw,20px);
     font-weight: 600;
     margin-top: auto;
+    flex-wrap: wrap;
   }
   .card .card-sub{
     font-size: 11px;
     color: var(--text-dim);
     font-weight: 500;
+    overflow-wrap: break-word;
   }
   .wind-arrow{
     width: 20px; height:20px;
@@ -156,14 +160,20 @@
 
   #hint{
     display:flex; flex-direction:column; align-items:center; gap:2px;
+    width:100%; max-width:520px;
+    padding: 0 4vw;
+    box-sizing: border-box;
   }
   .hint-row{
     -webkit-appearance: none; appearance: none;
     color: rgba(255,255,255,0.55);
-    font-size: 13px;
+    font-size: clamp(11px, 3.4vw, 13px);
     font-weight: 500;
     letter-spacing: 0.01em;
-    display:flex; align-items:center; gap:9px;
+    display:flex; align-items:center; justify-content:center;
+    flex-wrap: wrap;
+    row-gap: 2px; column-gap: 9px;
+    width:100%;
     background:none; border:none; margin:0;
     font-family: inherit;
     padding: 11px 14px;
