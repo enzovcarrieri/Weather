@@ -37,6 +37,9 @@
     color: var(--text);
     display:flex; flex-direction:column;
   }
+  /* tighter sizing for scripted screenshot exports (?export=1), so poster + hints fit with clean margins */
+  html.export-mode #poster{ height: 84vh; }
+  html.export-mode #stage{ gap: 26px; }
   /* decorative drifting atmosphere blobs for a "satellite/weather" feel */
   .blob{
     position:absolute; border-radius:50%;
@@ -188,6 +191,7 @@
   }
   .keycap.keycap-space{ width: 46px; }
   .keycap.keycap-return{ font-size: 14px; }
+  .or-click{ opacity:0.6; font-style:italic; font-weight:500; }
 
   @media print{
     html,body{ background:none; height:auto; }
@@ -256,14 +260,17 @@
     <div id="hint">
       <button type="button" class="hint-row" id="btnCity">
         <span class="keycap keycap-space" aria-hidden="true"></span>
+        <span class="or-click" id="orClickCity">or click</span>
         <span id="hintCity">TO CHANGE CITY</span>
       </button>
       <button type="button" class="hint-row" id="btnUnit">
         <span class="keycap keycap-return" aria-hidden="true">⏎</span>
+        <span class="or-click" id="orClickUnit">or click</span>
         <span id="hintUnit">TO CHANGE TO FAHRENHEIT</span>
       </button>
       <button type="button" class="hint-row" id="btnLang">
         <span class="keycap keycap-letter" aria-hidden="true">W</span>
+        <span class="or-click" id="orClickLang">or click</span>
         <span id="hintLang">TO CHANGE LANGUAGE</span>
       </button>
     </div>
@@ -371,132 +378,252 @@ const CITIES = [
           ko:{city:"싱가포르",country:"싱가포르"}, ar:{city:"سنغافورة",country:"سنغافورة"}, hi:{city:"सिंगापुर",country:"सिंगापुर"}, tr:{city:"Singapur",country:"Singapur"}, pl:{city:"Singapur",country:"Singapur"},
           sv:{city:"Singapore",country:"Singapore"}, no:{city:"Singapore",country:"Singapore"}, da:{city:"Singapore",country:"Singapore"}, fi:{city:"Singapore",country:"Singapore"}, el:{city:"Σιγκαπούρη",country:"Σιγκαπούρη"},
           cs:{city:"Singapur",country:"Singapur"}, hu:{city:"Szingapúr",country:"Szingapúr"}, ro:{city:"Singapore",country:"Singapore"}, uk:{city:"Сінгапур",country:"Сінгапур"}, vi:{city:"Singapore",country:"Singapore"} } },
+  { lat:41.9028, lon:12.4964, tz:"Europe/Rome",
+    i18n:{ pt:{city:"Roma",country:"Itália"}, en:{city:"Rome",country:"Italy"}, es:{city:"Roma",country:"Italia"}, fr:{city:"Rome",country:"Italie"}, de:{city:"Rom",country:"Italien"},
+          it:{city:"Roma",country:"Italia"}, nl:{city:"Rome",country:"Italië"}, ru:{city:"Рим",country:"Италия"}, ja:{city:"ローマ",country:"イタリア"}, zh:{city:"罗马",country:"意大利"},
+          ko:{city:"로마",country:"이탈리아"}, ar:{city:"روما",country:"إيطاليا"}, hi:{city:"रोम",country:"इटली"}, tr:{city:"Roma",country:"İtalya"}, pl:{city:"Rzym",country:"Włochy"},
+          sv:{city:"Rom",country:"Italien"}, no:{city:"Roma",country:"Italia"}, da:{city:"Rom",country:"Italien"}, fi:{city:"Rooma",country:"Italia"}, el:{city:"Ρώμη",country:"Ιταλία"},
+          cs:{city:"Řím",country:"Itálie"}, hu:{city:"Róma",country:"Olaszország"}, ro:{city:"Roma",country:"Italia"}, uk:{city:"Рим",country:"Італія"}, vi:{city:"Roma",country:"Ý"} } },
+  { lat:52.3676, lon:4.9041, tz:"Europe/Amsterdam",
+    i18n:{ pt:{city:"Amsterdã",country:"Países Baixos"}, en:{city:"Amsterdam",country:"Netherlands"}, es:{city:"Ámsterdam",country:"Países Bajos"}, fr:{city:"Amsterdam",country:"Pays-Bas"}, de:{city:"Amsterdam",country:"Niederlande"},
+          it:{city:"Amsterdam",country:"Paesi Bassi"}, nl:{city:"Amsterdam",country:"Nederland"}, ru:{city:"Амстердам",country:"Нидерланды"}, ja:{city:"アムステルダム",country:"オランダ"}, zh:{city:"阿姆斯特丹",country:"荷兰"},
+          ko:{city:"암스테르담",country:"네덜란드"}, ar:{city:"أمستردام",country:"هولندا"}, hi:{city:"एम्स्टर्डम",country:"नीदरलैंड"}, tr:{city:"Amsterdam",country:"Hollanda"}, pl:{city:"Amsterdam",country:"Holandia"},
+          sv:{city:"Amsterdam",country:"Nederländerna"}, no:{city:"Amsterdam",country:"Nederland"}, da:{city:"Amsterdam",country:"Nederlandene"}, fi:{city:"Amsterdam",country:"Alankomaat"}, el:{city:"Άμστερνταμ",country:"Ολλανδία"},
+          cs:{city:"Amsterdam",country:"Nizozemsko"}, hu:{city:"Amszterdam",country:"Hollandia"}, ro:{city:"Amsterdam",country:"Țările de Jos"}, uk:{city:"Амстердам",country:"Нідерланди"}, vi:{city:"Amsterdam",country:"Hà Lan"} } },
+  { lat:41.0082, lon:28.9784, tz:"Europe/Istanbul",
+    i18n:{ pt:{city:"Istambul",country:"Turquia"}, en:{city:"Istanbul",country:"Turkey"}, es:{city:"Estambul",country:"Turquía"}, fr:{city:"Istanbul",country:"Turquie"}, de:{city:"Istanbul",country:"Türkei"},
+          it:{city:"Istanbul",country:"Turchia"}, nl:{city:"Istanbul",country:"Turkije"}, ru:{city:"Стамбул",country:"Турция"}, ja:{city:"イスタンブール",country:"トルコ"}, zh:{city:"伊斯坦布尔",country:"土耳其"},
+          ko:{city:"이스탄불",country:"튀르키예"}, ar:{city:"إسطنبول",country:"تركيا"}, hi:{city:"इस्तांबुल",country:"तुर्की"}, tr:{city:"İstanbul",country:"Türkiye"}, pl:{city:"Stambuł",country:"Turcja"},
+          sv:{city:"Istanbul",country:"Turkiet"}, no:{city:"Istanbul",country:"Tyrkia"}, da:{city:"Istanbul",country:"Tyrkiet"}, fi:{city:"Istanbul",country:"Turkki"}, el:{city:"Ιστανμπούλ",country:"Τουρκία"},
+          cs:{city:"Istanbul",country:"Turecko"}, hu:{city:"Isztambul",country:"Törökország"}, ro:{city:"Istanbul",country:"Turcia"}, uk:{city:"Стамбул",country:"Туреччина"}, vi:{city:"Istanbul",country:"Thổ Nhĩ Kỳ"} } },
+  { lat:52.2297, lon:21.0122, tz:"Europe/Warsaw",
+    i18n:{ pt:{city:"Varsóvia",country:"Polônia"}, en:{city:"Warsaw",country:"Poland"}, es:{city:"Varsovia",country:"Polonia"}, fr:{city:"Varsovie",country:"Pologne"}, de:{city:"Warschau",country:"Polen"},
+          it:{city:"Varsavia",country:"Polonia"}, nl:{city:"Warschau",country:"Polen"}, ru:{city:"Варшава",country:"Польша"}, ja:{city:"ワルシャワ",country:"ポーランド"}, zh:{city:"华沙",country:"波兰"},
+          ko:{city:"바르샤바",country:"폴란드"}, ar:{city:"وارسو",country:"بولندا"}, hi:{city:"वारसॉ",country:"पोलैंड"}, tr:{city:"Varşova",country:"Polonya"}, pl:{city:"Warszawa",country:"Polska"},
+          sv:{city:"Warszawa",country:"Polen"}, no:{city:"Warszawa",country:"Polen"}, da:{city:"Warszawa",country:"Polen"}, fi:{city:"Varsova",country:"Puola"}, el:{city:"Βαρσοβία",country:"Πολωνία"},
+          cs:{city:"Varšava",country:"Polsko"}, hu:{city:"Varsó",country:"Lengyelország"}, ro:{city:"Varșovia",country:"Polonia"}, uk:{city:"Варшава",country:"Польща"}, vi:{city:"Warsaw",country:"Ba Lan"} } },
+  { lat:59.3293, lon:18.0686, tz:"Europe/Stockholm",
+    i18n:{ pt:{city:"Estocolmo",country:"Suécia"}, en:{city:"Stockholm",country:"Sweden"}, es:{city:"Estocolmo",country:"Suecia"}, fr:{city:"Stockholm",country:"Suède"}, de:{city:"Stockholm",country:"Schweden"},
+          it:{city:"Stoccolma",country:"Svezia"}, nl:{city:"Stockholm",country:"Zweden"}, ru:{city:"Стокгольм",country:"Швеция"}, ja:{city:"ストックホルム",country:"スウェーデン"}, zh:{city:"斯德哥尔摩",country:"瑞典"},
+          ko:{city:"스톡홀름",country:"스웨덴"}, ar:{city:"ستوكهولم",country:"السويد"}, hi:{city:"स्टॉकहोम",country:"स्वीडन"}, tr:{city:"Stockholm",country:"İsveç"}, pl:{city:"Sztokholm",country:"Szwecja"},
+          sv:{city:"Stockholm",country:"Sverige"}, no:{city:"Stockholm",country:"Sverige"}, da:{city:"Stockholm",country:"Sverige"}, fi:{city:"Tukholma",country:"Ruotsi"}, el:{city:"Στοκχόλμη",country:"Σουηδία"},
+          cs:{city:"Stockholm",country:"Švédsko"}, hu:{city:"Stockholm",country:"Svédország"}, ro:{city:"Stockholm",country:"Suedia"}, uk:{city:"Стокгольм",country:"Швеція"}, vi:{city:"Stockholm",country:"Thụy Điển"} } },
+  { lat:59.9139, lon:10.7522, tz:"Europe/Oslo",
+    i18n:{ pt:{city:"Oslo",country:"Noruega"}, en:{city:"Oslo",country:"Norway"}, es:{city:"Oslo",country:"Noruega"}, fr:{city:"Oslo",country:"Norvège"}, de:{city:"Oslo",country:"Norwegen"},
+          it:{city:"Oslo",country:"Norvegia"}, nl:{city:"Oslo",country:"Noorwegen"}, ru:{city:"Осло",country:"Норвегия"}, ja:{city:"オスロ",country:"ノルウェー"}, zh:{city:"奥斯陆",country:"挪威"},
+          ko:{city:"오슬로",country:"노르웨이"}, ar:{city:"أوسلو",country:"النرويج"}, hi:{city:"ओस्लो",country:"नॉर्वे"}, tr:{city:"Oslo",country:"Norveç"}, pl:{city:"Oslo",country:"Norwegia"},
+          sv:{city:"Oslo",country:"Norge"}, no:{city:"Oslo",country:"Norge"}, da:{city:"Oslo",country:"Norge"}, fi:{city:"Oslo",country:"Norja"}, el:{city:"Όσλο",country:"Νορβηγία"},
+          cs:{city:"Oslo",country:"Norsko"}, hu:{city:"Oslo",country:"Norvégia"}, ro:{city:"Oslo",country:"Norvegia"}, uk:{city:"Осло",country:"Норвегія"}, vi:{city:"Oslo",country:"Na Uy"} } },
+  { lat:55.6761, lon:12.5683, tz:"Europe/Copenhagen",
+    i18n:{ pt:{city:"Copenhague",country:"Dinamarca"}, en:{city:"Copenhagen",country:"Denmark"}, es:{city:"Copenhague",country:"Dinamarca"}, fr:{city:"Copenhague",country:"Danemark"}, de:{city:"Kopenhagen",country:"Dänemark"},
+          it:{city:"Copenaghen",country:"Danimarca"}, nl:{city:"Kopenhagen",country:"Denemarken"}, ru:{city:"Копенгаген",country:"Дания"}, ja:{city:"コペンハーゲン",country:"デンマーク"}, zh:{city:"哥本哈根",country:"丹麦"},
+          ko:{city:"코펜하겐",country:"덴마크"}, ar:{city:"كوبنهاغن",country:"الدنمارك"}, hi:{city:"कोपेनहेगन",country:"डेनमार्क"}, tr:{city:"Kopenhag",country:"Danimarka"}, pl:{city:"Kopenhaga",country:"Dania"},
+          sv:{city:"Köpenhamn",country:"Danmark"}, no:{city:"København",country:"Danmark"}, da:{city:"København",country:"Danmark"}, fi:{city:"Kööpenhamina",country:"Tanska"}, el:{city:"Κοπεγχάγη",country:"Δανία"},
+          cs:{city:"Kodaň",country:"Dánsko"}, hu:{city:"Koppenhága",country:"Dánia"}, ro:{city:"Copenhaga",country:"Danemarca"}, uk:{city:"Копенгаген",country:"Данія"}, vi:{city:"Copenhagen",country:"Đan Mạch"} } },
+  { lat:60.1699, lon:24.9384, tz:"Europe/Helsinki",
+    i18n:{ pt:{city:"Helsinque",country:"Finlândia"}, en:{city:"Helsinki",country:"Finland"}, es:{city:"Helsinki",country:"Finlandia"}, fr:{city:"Helsinki",country:"Finlande"}, de:{city:"Helsinki",country:"Finnland"},
+          it:{city:"Helsinki",country:"Finlandia"}, nl:{city:"Helsinki",country:"Finland"}, ru:{city:"Хельсинки",country:"Финляндия"}, ja:{city:"ヘルシンキ",country:"フィンランド"}, zh:{city:"赫尔辛基",country:"芬兰"},
+          ko:{city:"헬싱키",country:"핀란드"}, ar:{city:"هلسنكي",country:"فنلندا"}, hi:{city:"हेलसिंकी",country:"फ़िनलैंड"}, tr:{city:"Helsinki",country:"Finlandiya"}, pl:{city:"Helsinki",country:"Finlandia"},
+          sv:{city:"Helsingfors",country:"Finland"}, no:{city:"Helsingfors",country:"Finland"}, da:{city:"Helsinki",country:"Finland"}, fi:{city:"Helsinki",country:"Suomi"}, el:{city:"Ελσίνκι",country:"Φινλανδία"},
+          cs:{city:"Helsinky",country:"Finsko"}, hu:{city:"Helsinki",country:"Finnország"}, ro:{city:"Helsinki",country:"Finlanda"}, uk:{city:"Гельсінкі",country:"Фінляндія"}, vi:{city:"Helsinki",country:"Phần Lan"} } },
+  { lat:37.9838, lon:23.7275, tz:"Europe/Athens",
+    i18n:{ pt:{city:"Atenas",country:"Grécia"}, en:{city:"Athens",country:"Greece"}, es:{city:"Atenas",country:"Grecia"}, fr:{city:"Athènes",country:"Grèce"}, de:{city:"Athen",country:"Griechenland"},
+          it:{city:"Atene",country:"Grecia"}, nl:{city:"Athene",country:"Griekenland"}, ru:{city:"Афины",country:"Греция"}, ja:{city:"アテネ",country:"ギリシャ"}, zh:{city:"雅典",country:"希腊"},
+          ko:{city:"아테네",country:"그리스"}, ar:{city:"أثينا",country:"اليونان"}, hi:{city:"एथेंस",country:"ग्रीस"}, tr:{city:"Atina",country:"Yunanistan"}, pl:{city:"Ateny",country:"Grecja"},
+          sv:{city:"Aten",country:"Grekland"}, no:{city:"Athen",country:"Hellas"}, da:{city:"Athen",country:"Grækenland"}, fi:{city:"Ateena",country:"Kreikka"}, el:{city:"Αθήνα",country:"Ελλάδα"},
+          cs:{city:"Atény",country:"Řecko"}, hu:{city:"Athén",country:"Görögország"}, ro:{city:"Atena",country:"Grecia"}, uk:{city:"Афіни",country:"Греція"}, vi:{city:"Athens",country:"Hy Lạp"} } },
+  { lat:50.0755, lon:14.4378, tz:"Europe/Prague",
+    i18n:{ pt:{city:"Praga",country:"República Tcheca"}, en:{city:"Prague",country:"Czech Republic"}, es:{city:"Praga",country:"República Checa"}, fr:{city:"Prague",country:"République tchèque"}, de:{city:"Prag",country:"Tschechien"},
+          it:{city:"Praga",country:"Repubblica Ceca"}, nl:{city:"Praag",country:"Tsjechië"}, ru:{city:"Прага",country:"Чехия"}, ja:{city:"プラハ",country:"チェコ"}, zh:{city:"布拉格",country:"捷克"},
+          ko:{city:"프라하",country:"체코"}, ar:{city:"براغ",country:"التشيك"}, hi:{city:"प्राग",country:"चेक गणराज्य"}, tr:{city:"Prag",country:"Çekya"}, pl:{city:"Praga",country:"Czechy"},
+          sv:{city:"Prag",country:"Tjeckien"}, no:{city:"Praha",country:"Tsjekkia"}, da:{city:"Prag",country:"Tjekkiet"}, fi:{city:"Praha",country:"Tšekki"}, el:{city:"Πράγα",country:"Τσεχία"},
+          cs:{city:"Praha",country:"Česko"}, hu:{city:"Prága",country:"Csehország"}, ro:{city:"Praga",country:"Cehia"}, uk:{city:"Прага",country:"Чехія"}, vi:{city:"Praha",country:"Séc"} } },
+  { lat:47.4979, lon:19.0402, tz:"Europe/Budapest",
+    i18n:{ pt:{city:"Budapeste",country:"Hungria"}, en:{city:"Budapest",country:"Hungary"}, es:{city:"Budapest",country:"Hungría"}, fr:{city:"Budapest",country:"Hongrie"}, de:{city:"Budapest",country:"Ungarn"},
+          it:{city:"Budapest",country:"Ungheria"}, nl:{city:"Boedapest",country:"Hongarije"}, ru:{city:"Будапешт",country:"Венгрия"}, ja:{city:"ブダペスト",country:"ハンガリー"}, zh:{city:"布达佩斯",country:"匈牙利"},
+          ko:{city:"부다페스트",country:"헝가리"}, ar:{city:"بودابست",country:"المجر"}, hi:{city:"बुडापेस्ट",country:"हंगरी"}, tr:{city:"Budapeşte",country:"Macaristan"}, pl:{city:"Budapeszt",country:"Węgry"},
+          sv:{city:"Budapest",country:"Ungern"}, no:{city:"Budapest",country:"Ungarn"}, da:{city:"Budapest",country:"Ungarn"}, fi:{city:"Budapest",country:"Unkari"}, el:{city:"Βουδαπέστη",country:"Ουγγαρία"},
+          cs:{city:"Budapešť",country:"Maďarsko"}, hu:{city:"Budapest",country:"Magyarország"}, ro:{city:"Budapesta",country:"Ungaria"}, uk:{city:"Будапешт",country:"Угорщина"}, vi:{city:"Budapest",country:"Hungary"} } },
+  { lat:44.4268, lon:26.1025, tz:"Europe/Bucharest",
+    i18n:{ pt:{city:"Bucareste",country:"Romênia"}, en:{city:"Bucharest",country:"Romania"}, es:{city:"Bucarest",country:"Rumanía"}, fr:{city:"Bucarest",country:"Roumanie"}, de:{city:"Bukarest",country:"Rumänien"},
+          it:{city:"Bucarest",country:"Romania"}, nl:{city:"Boekarest",country:"Roemenië"}, ru:{city:"Бухарест",country:"Румыния"}, ja:{city:"ブカレスト",country:"ルーマニア"}, zh:{city:"布加勒斯特",country:"罗马尼亚"},
+          ko:{city:"부쿠레슈티",country:"루마니아"}, ar:{city:"بوخارست",country:"رومانيا"}, hi:{city:"बुखारेस्ट",country:"रोमानिया"}, tr:{city:"Bükreş",country:"Romanya"}, pl:{city:"Bukareszt",country:"Rumunia"},
+          sv:{city:"Bukarest",country:"Rumänien"}, no:{city:"București",country:"Romania"}, da:{city:"Bukarest",country:"Rumænien"}, fi:{city:"Bukarest",country:"Romania"}, el:{city:"Βουκουρέστι",country:"Ρουμανία"},
+          cs:{city:"Bukurešť",country:"Rumunsko"}, hu:{city:"Bukarest",country:"Románia"}, ro:{city:"București",country:"România"}, uk:{city:"Бухарест",country:"Румунія"}, vi:{city:"Bucharest",country:"Romania"} } },
+  { lat:50.4501, lon:30.5234, tz:"Europe/Kyiv",
+    i18n:{ pt:{city:"Kiev",country:"Ucrânia"}, en:{city:"Kyiv",country:"Ukraine"}, es:{city:"Kiev",country:"Ucrania"}, fr:{city:"Kiev",country:"Ukraine"}, de:{city:"Kiew",country:"Ukraine"},
+          it:{city:"Kiev",country:"Ucraina"}, nl:{city:"Kiev",country:"Oekraïne"}, ru:{city:"Киев",country:"Украина"}, ja:{city:"キーウ",country:"ウクライナ"}, zh:{city:"基辅",country:"乌克兰"},
+          ko:{city:"키이우",country:"우크라이나"}, ar:{city:"كييف",country:"أوكرانيا"}, hi:{city:"कीव",country:"यूक्रेन"}, tr:{city:"Kyiv",country:"Ukrayna"}, pl:{city:"Kijów",country:"Ukraina"},
+          sv:{city:"Kiev",country:"Ukraina"}, no:{city:"Kyiv",country:"Ukraina"}, da:{city:"Kyiv",country:"Ukraine"}, fi:{city:"Kiova",country:"Ukraina"}, el:{city:"Κίεβο",country:"Ουκρανία"},
+          cs:{city:"Kyjev",country:"Ukrajina"}, hu:{city:"Kijev",country:"Ukrajna"}, ro:{city:"Kiev",country:"Ucraina"}, uk:{city:"Київ",country:"Україна"}, vi:{city:"Kyiv",country:"Ukraine"} } },
+  { lat:21.0278, lon:105.8342, tz:"Asia/Ho_Chi_Minh",
+    i18n:{ pt:{city:"Hanói",country:"Vietnã"}, en:{city:"Hanoi",country:"Vietnam"}, es:{city:"Hanói",country:"Vietnam"}, fr:{city:"Hanoï",country:"Vietnam"}, de:{city:"Hanoi",country:"Vietnam"},
+          it:{city:"Hanoi",country:"Vietnam"}, nl:{city:"Hanoi",country:"Vietnam"}, ru:{city:"Ханой",country:"Вьетнам"}, ja:{city:"ハノイ",country:"ベトナム"}, zh:{city:"河内",country:"越南"},
+          ko:{city:"하노이",country:"베트남"}, ar:{city:"هانوي",country:"فيتنام"}, hi:{city:"हनोई",country:"वियतनाम"}, tr:{city:"Hanoi",country:"Vietnam"}, pl:{city:"Hanoi",country:"Wietnam"},
+          sv:{city:"Hanoi",country:"Vietnam"}, no:{city:"Hanoi",country:"Vietnam"}, da:{city:"Hanoi",country:"Vietnam"}, fi:{city:"Hanoi",country:"Vietnam"}, el:{city:"Ανόι",country:"Βιετνάμ"},
+          cs:{city:"Hanoj",country:"Vietnam"}, hu:{city:"Hanoi",country:"Vietnám"}, ro:{city:"Hanoi",country:"Vietnam"}, uk:{city:"Ханой",country:"В'єтнам"}, vi:{city:"Hà Nội",country:"Việt Nam"} } },
+  { lat:37.5665, lon:126.9780, tz:"Asia/Seoul",
+    i18n:{ pt:{city:"Seul",country:"Coreia do Sul"}, en:{city:"Seoul",country:"South Korea"}, es:{city:"Seúl",country:"Corea del Sur"}, fr:{city:"Séoul",country:"Corée du Sud"}, de:{city:"Seoul",country:"Südkorea"},
+          it:{city:"Seul",country:"Corea del Sud"}, nl:{city:"Seoel",country:"Zuid-Korea"}, ru:{city:"Сеул",country:"Южная Корея"}, ja:{city:"ソウル",country:"韓国"}, zh:{city:"首尔",country:"韩国"},
+          ko:{city:"서울",country:"대한민국"}, ar:{city:"سول",country:"كوريا الجنوبية"}, hi:{city:"सियोल",country:"दक्षिण कोरिया"}, tr:{city:"Seul",country:"Güney Kore"}, pl:{city:"Seul",country:"Korea Południowa"},
+          sv:{city:"Seoul",country:"Sydkorea"}, no:{city:"Seoul",country:"Sør-Korea"}, da:{city:"Seoul",country:"Sydkorea"}, fi:{city:"Soul",country:"Etelä-Korea"}, el:{city:"Σεούλ",country:"Νότια Κορέα"},
+          cs:{city:"Soul",country:"Jižní Korea"}, hu:{city:"Szöul",country:"Dél-Korea"}, ro:{city:"Seul",country:"Coreea de Sud"}, uk:{city:"Сеул",country:"Південна Корея"}, vi:{city:"Seoul",country:"Hàn Quốc"} } },
+  { lat:40.4168, lon:-3.7038, tz:"Europe/Madrid",
+    i18n:{ pt:{city:"Madri",country:"Espanha"}, en:{city:"Madrid",country:"Spain"}, es:{city:"Madrid",country:"España"}, fr:{city:"Madrid",country:"Espagne"}, de:{city:"Madrid",country:"Spanien"},
+          it:{city:"Madrid",country:"Spagna"}, nl:{city:"Madrid",country:"Spanje"}, ru:{city:"Мадрид",country:"Испания"}, ja:{city:"マドリード",country:"スペイン"}, zh:{city:"马德里",country:"西班牙"},
+          ko:{city:"마드리드",country:"스페인"}, ar:{city:"مدريد",country:"إسبانيا"}, hi:{city:"मैड्रिड",country:"स्पेन"}, tr:{city:"Madrid",country:"İspanya"}, pl:{city:"Madryt",country:"Hiszpania"},
+          sv:{city:"Madrid",country:"Spanien"}, no:{city:"Madrid",country:"Spania"}, da:{city:"Madrid",country:"Spanien"}, fi:{city:"Madrid",country:"Espanja"}, el:{city:"Μαδρίτη",country:"Ισπανία"},
+          cs:{city:"Madrid",country:"Španělsko"}, hu:{city:"Madrid",country:"Spanyolország"}, ro:{city:"Madrid",country:"Spania"}, uk:{city:"Мадрид",country:"Іспанія"}, vi:{city:"Madrid",country:"Tây Ban Nha"} } },
+  { lat:48.8566, lon:2.3522, tz:"Europe/Paris",
+    i18n:{ pt:{city:"Paris",country:"França"}, en:{city:"Paris",country:"France"}, es:{city:"París",country:"Francia"}, fr:{city:"Paris",country:"France"}, de:{city:"Paris",country:"Frankreich"},
+          it:{city:"Parigi",country:"Francia"}, nl:{city:"Parijs",country:"Frankrijk"}, ru:{city:"Париж",country:"Франция"}, ja:{city:"パリ",country:"フランス"}, zh:{city:"巴黎",country:"法国"},
+          ko:{city:"파리",country:"프랑스"}, ar:{city:"باريس",country:"فرنسا"}, hi:{city:"पेरिस",country:"फ़्रांस"}, tr:{city:"Paris",country:"Fransa"}, pl:{city:"Paryż",country:"Francja"},
+          sv:{city:"Paris",country:"Frankrike"}, no:{city:"Paris",country:"Frankrike"}, da:{city:"Paris",country:"Frankrig"}, fi:{city:"Pariisi",country:"Ranska"}, el:{city:"Παρίσι",country:"Γαλλία"},
+          cs:{city:"Paříž",country:"Francie"}, hu:{city:"Párizs",country:"Franciaország"}, ro:{city:"Paris",country:"Franța"}, uk:{city:"Париж",country:"Франція"}, vi:{city:"Paris",country:"Pháp"} } },
+  { lat:52.5200, lon:13.4050, tz:"Europe/Berlin",
+    i18n:{ pt:{city:"Berlim",country:"Alemanha"}, en:{city:"Berlin",country:"Germany"}, es:{city:"Berlín",country:"Alemania"}, fr:{city:"Berlin",country:"Allemagne"}, de:{city:"Berlin",country:"Deutschland"},
+          it:{city:"Berlino",country:"Germania"}, nl:{city:"Berlijn",country:"Duitsland"}, ru:{city:"Берлин",country:"Германия"}, ja:{city:"ベルリン",country:"ドイツ"}, zh:{city:"柏林",country:"德国"},
+          ko:{city:"베를린",country:"독일"}, ar:{city:"برلين",country:"ألمانيا"}, hi:{city:"बर्लिन",country:"जर्मनी"}, tr:{city:"Berlin",country:"Almanya"}, pl:{city:"Berlin",country:"Niemcy"},
+          sv:{city:"Berlin",country:"Tyskland"}, no:{city:"Berlin",country:"Tyskland"}, da:{city:"Berlin",country:"Tyskland"}, fi:{city:"Berliini",country:"Saksa"}, el:{city:"Βερολίνο",country:"Γερμανία"},
+          cs:{city:"Berlín",country:"Německo"}, hu:{city:"Berlin",country:"Németország"}, ro:{city:"Berlin",country:"Germania"}, uk:{city:"Берлін",country:"Німеччина"}, vi:{city:"Berlin",country:"Đức"} } },
+  { lat:19.4326, lon:-99.1332, tz:"America/Mexico_City",
+    i18n:{ pt:{city:"Cidade do México",country:"México"}, en:{city:"Mexico City",country:"Mexico"}, es:{city:"Ciudad de México",country:"México"}, fr:{city:"Mexico",country:"Mexique"}, de:{city:"Mexiko-Stadt",country:"Mexiko"},
+          it:{city:"Città del Messico",country:"Messico"}, nl:{city:"Mexico-Stad",country:"Mexico"}, ru:{city:"Мехико",country:"Мексика"}, ja:{city:"メキシコシティ",country:"メキシコ"}, zh:{city:"墨西哥城",country:"墨西哥"},
+          ko:{city:"멕시코시티",country:"멕시코"}, ar:{city:"مكسيكو سيتي",country:"المكسيك"}, hi:{city:"मेक्सिको सिटी",country:"मेक्सिको"}, tr:{city:"Meksiko",country:"Meksika"}, pl:{city:"Meksyk",country:"Meksyk"},
+          sv:{city:"Mexico City",country:"Mexiko"}, no:{city:"Mexico by",country:"Mexico"}, da:{city:"Mexico City",country:"Mexico"}, fi:{city:"Mexico City",country:"Meksiko"}, el:{city:"Πόλη του Μεξικού",country:"Μεξικό"},
+          cs:{city:"Mexico City",country:"Mexiko"}, hu:{city:"Mexikóváros",country:"Mexikó"}, ro:{city:"Mexico City",country:"Mexic"}, uk:{city:"Мехіко",country:"Мексика"}, vi:{city:"Thành phố Mexico",country:"Mexico"} } },
+  { lat:13.7563, lon:100.5018, tz:"Asia/Bangkok",
+    i18n:{ pt:{city:"Bangkok",country:"Tailândia"}, en:{city:"Bangkok",country:"Thailand"}, es:{city:"Bangkok",country:"Tailandia"}, fr:{city:"Bangkok",country:"Thaïlande"}, de:{city:"Bangkok",country:"Thailand"},
+          it:{city:"Bangkok",country:"Tailandia"}, nl:{city:"Bangkok",country:"Thailand"}, ru:{city:"Бангкок",country:"Таиланд"}, ja:{city:"バンコク",country:"タイ"}, zh:{city:"曼谷",country:"泰国"},
+          ko:{city:"방콕",country:"태국"}, ar:{city:"بانكوك",country:"تايلاند"}, hi:{city:"बैंकॉक",country:"थाईलैंड"}, tr:{city:"Bangkok",country:"Tayland"}, pl:{city:"Bangkok",country:"Tajlandia"},
+          sv:{city:"Bangkok",country:"Thailand"}, no:{city:"Bangkok",country:"Thailand"}, da:{city:"Bangkok",country:"Thailand"}, fi:{city:"Bangkok",country:"Thaimaa"}, el:{city:"Μπανγκόκ",country:"Ταϊλάνδη"},
+          cs:{city:"Bangkok",country:"Thajsko"}, hu:{city:"Bangkok",country:"Thaiföld"}, ro:{city:"Bangkok",country:"Thailanda"}, uk:{city:"Бангкок",country:"Таїланд"}, vi:{city:"Bangkok",country:"Thái Lan"} } },
 ];
 
 const UI = {
   pt:{ wind:"Vento", precipitation:"Precipitação", location:"Localização",
        feelsLike:v=>`Sensação de ${v}°`, humidity:v=>`umidade ${v}%`, localTime:t=>`${t} (hora local)`,
-       hintCity:"PARA TROCAR DE CIDADE", hintUnit:u=>`PARA MUDAR PARA ${u}`, hintLang:"PARA MUDAR O IDIOMA",
+       hintCity:"PARA TROCAR DE CIDADE", hintUnit:u=>`PARA MUDAR PARA ${u}`, hintLang:"PARA MUDAR O IDIOMA", orClick:"ou clique",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"falha ao carregar clima", loading:"carregando…",
        lon:{pos:"L",neg:"O"} },
   en:{ wind:"Wind", precipitation:"Precipitation", location:"Location",
        feelsLike:v=>`Feels like ${v}°`, humidity:v=>`humidity ${v}%`, localTime:t=>`${t} (local time)`,
-       hintCity:"TO CHANGE CITY", hintUnit:u=>`TO CHANGE TO ${u}`, hintLang:"TO CHANGE LANGUAGE",
+       hintCity:"TO CHANGE CITY", hintUnit:u=>`TO CHANGE TO ${u}`, hintLang:"TO CHANGE LANGUAGE", orClick:"or click",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"failed to load weather", loading:"loading…",
        lon:{pos:"E",neg:"W"} },
   es:{ wind:"Viento", precipitation:"Precipitación", location:"Ubicación",
        feelsLike:v=>`Sensación de ${v}°`, humidity:v=>`humedad ${v}%`, localTime:t=>`${t} (hora local)`,
-       hintCity:"PARA CAMBIAR DE CIUDAD", hintUnit:u=>`PARA CAMBIAR A ${u}`, hintLang:"PARA CAMBIAR EL IDIOMA",
+       hintCity:"PARA CAMBIAR DE CIUDAD", hintUnit:u=>`PARA CAMBIAR A ${u}`, hintLang:"PARA CAMBIAR EL IDIOMA", orClick:"o haz clic",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"no se pudo cargar el clima", loading:"cargando…",
        lon:{pos:"E",neg:"O"} },
   fr:{ wind:"Vent", precipitation:"Précipitations", location:"Localisation",
        feelsLike:v=>`Ressenti ${v}°`, humidity:v=>`humidité ${v}%`, localTime:t=>`${t} (heure locale)`,
-       hintCity:"POUR CHANGER DE VILLE", hintUnit:u=>`POUR PASSER EN ${u}`, hintLang:"POUR CHANGER DE LANGUE",
+       hintCity:"POUR CHANGER DE VILLE", hintUnit:u=>`POUR PASSER EN ${u}`, hintLang:"POUR CHANGER DE LANGUE", orClick:"ou cliquez",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"échec du chargement de la météo", loading:"chargement…",
        lon:{pos:"E",neg:"O"} },
   de:{ wind:"Wind", precipitation:"Niederschlag", location:"Standort",
        feelsLike:v=>`Gefühlt ${v}°`, humidity:v=>`Luftfeuchtigkeit ${v}%`, localTime:t=>`${t} (Ortszeit)`,
-       hintCity:"UM DIE STADT ZU WECHSELN", hintUnit:u=>`UM ZU ${u} ZU WECHSELN`, hintLang:"UM DIE SPRACHE ZU WECHSELN",
+       hintCity:"UM DIE STADT ZU WECHSELN", hintUnit:u=>`UM ZU ${u} ZU WECHSELN`, hintLang:"UM DIE SPRACHE ZU WECHSELN", orClick:"oder klicken",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"Wetter konnte nicht geladen werden", loading:"lädt…",
        lon:{pos:"O",neg:"W"} },
   it:{ wind:"Vento", precipitation:"Precipitazioni", location:"Posizione",
        feelsLike:v=>`Percepita ${v}°`, humidity:v=>`umidità ${v}%`, localTime:t=>`${t} (ora locale)`,
-       hintCity:"PER CAMBIARE CITTÀ", hintUnit:u=>`PER PASSARE A ${u}`, hintLang:"PER CAMBIARE LINGUA",
+       hintCity:"PER CAMBIARE CITTÀ", hintUnit:u=>`PER PASSARE A ${u}`, hintLang:"PER CAMBIARE LINGUA", orClick:"o clicca",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"impossibile caricare il meteo", loading:"caricamento…",
        lon:{pos:"E",neg:"O"} },
   nl:{ wind:"Wind", precipitation:"Neerslag", location:"Locatie",
        feelsLike:v=>`Voelt als ${v}°`, humidity:v=>`luchtvochtigheid ${v}%`, localTime:t=>`${t} (lokale tijd)`,
-       hintCity:"OM VAN STAD TE WISSELEN", hintUnit:u=>`OM NAAR ${u} TE WISSELEN`, hintLang:"OM VAN TAAL TE WISSELEN",
+       hintCity:"OM VAN STAD TE WISSELEN", hintUnit:u=>`OM NAAR ${u} TE WISSELEN`, hintLang:"OM VAN TAAL TE WISSELEN", orClick:"of klik",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"weer laden mislukt", loading:"laden…",
        lon:{pos:"O",neg:"W"} },
   ru:{ wind:"Ветер", precipitation:"Осадки", location:"Местоположение",
        feelsLike:v=>`Ощущается как ${v}°`, humidity:v=>`влажность ${v}%`, localTime:t=>`${t} (местное время)`,
-       hintCity:"ЧТОБЫ СМЕНИТЬ ГОРОД", hintUnit:u=>`ЧТОБЫ ПЕРЕЙТИ НА ${u}`, hintLang:"ЧТОБЫ СМЕНИТЬ ЯЗЫК",
+       hintCity:"ЧТОБЫ СМЕНИТЬ ГОРОД", hintUnit:u=>`ЧТОБЫ ПЕРЕЙТИ НА ${u}`, hintLang:"ЧТОБЫ СМЕНИТЬ ЯЗЫК", orClick:"или нажмите",
        unitName:{C:"ЦЕЛЬСИЙ",F:"ФАРЕНГЕЙТ"}, failLoad:"не удалось загрузить погоду", loading:"загрузка…",
        lon:{pos:"В",neg:"З"} },
   ja:{ wind:"風", precipitation:"降水量", location:"位置",
        feelsLike:v=>`体感 ${v}°`, humidity:v=>`湿度 ${v}%`, localTime:t=>`${t}（現地時間）`,
-       hintCity:"都市を変更", hintUnit:u=>`${u}に切り替え`, hintLang:"言語を変更",
+       hintCity:"都市を変更", hintUnit:u=>`${u}に切り替え`, hintLang:"言語を変更", orClick:"またはクリック",
        unitName:{C:"摂氏",F:"華氏"}, failLoad:"天気を読み込めませんでした", loading:"読み込み中…",
        lon:{pos:"東",neg:"西"} },
   zh:{ wind:"风力", precipitation:"降水量", location:"位置",
        feelsLike:v=>`体感温度 ${v}°`, humidity:v=>`湿度 ${v}%`, localTime:t=>`${t}（当地时间）`,
-       hintCity:"切换城市", hintUnit:u=>`切换到${u}`, hintLang:"切换语言",
+       hintCity:"切换城市", hintUnit:u=>`切换到${u}`, hintLang:"切换语言", orClick:"或点击",
        unitName:{C:"摄氏度",F:"华氏度"}, failLoad:"天气加载失败", loading:"加载中…",
        lon:{pos:"东",neg:"西"} },
   ko:{ wind:"바람", precipitation:"강수량", location:"위치",
        feelsLike:v=>`체감 ${v}°`, humidity:v=>`습도 ${v}%`, localTime:t=>`${t} (현지 시간)`,
-       hintCity:"도시 변경", hintUnit:u=>`${u}로 전환`, hintLang:"언어 변경",
+       hintCity:"도시 변경", hintUnit:u=>`${u}로 전환`, hintLang:"언어 변경", orClick:"또는 클릭",
        unitName:{C:"섭씨",F:"화씨"}, failLoad:"날씨를 불러오지 못했습니다", loading:"로딩 중…",
        lon:{pos:"동",neg:"서"} },
   ar:{ wind:"الرياح", precipitation:"الهطول", location:"الموقع",
        feelsLike:v=>`الإحساس ${v}°`, humidity:v=>`الرطوبة ${v}%`, localTime:t=>`${t} (التوقيت المحلي)`,
-       hintCity:"لتغيير المدينة", hintUnit:u=>`للتحويل إلى ${u}`, hintLang:"لتغيير اللغة",
+       hintCity:"لتغيير المدينة", hintUnit:u=>`للتحويل إلى ${u}`, hintLang:"لتغيير اللغة", orClick:"أو انقر",
        unitName:{C:"مئوية",F:"فهرنهايت"}, failLoad:"تعذّر تحميل الطقس", loading:"جارٍ التحميل…",
        lon:{pos:"شرق",neg:"غرب"} },
   hi:{ wind:"हवा", precipitation:"वर्षा", location:"स्थान",
        feelsLike:v=>`महसूस ${v}°`, humidity:v=>`नमी ${v}%`, localTime:t=>`${t} (स्थानीय समय)`,
-       hintCity:"शहर बदलने के लिए", hintUnit:u=>`${u} में बदलने के लिए`, hintLang:"भाषा बदलने के लिए",
+       hintCity:"शहर बदलने के लिए", hintUnit:u=>`${u} में बदलने के लिए`, hintLang:"भाषा बदलने के लिए", orClick:"या क्लिक करें",
        unitName:{C:"सेल्सियस",F:"फ़ारेनहाइट"}, failLoad:"मौसम लोड नहीं हो सका", loading:"लोड हो रहा है…",
        lon:{pos:"पूर्व",neg:"पश्चिम"} },
   tr:{ wind:"Rüzgar", precipitation:"Yağış", location:"Konum",
        feelsLike:v=>`Hissedilen ${v}°`, humidity:v=>`nem %${v}`, localTime:t=>`${t} (yerel saat)`,
-       hintCity:"ŞEHRİ DEĞİŞTİRMEK İÇİN", hintUnit:u=>`${u}'A GEÇMEK İÇİN`, hintLang:"DİLİ DEĞİŞTİRMEK İÇİN",
+       hintCity:"ŞEHRİ DEĞİŞTİRMEK İÇİN", hintUnit:u=>`${u}'A GEÇMEK İÇİN`, hintLang:"DİLİ DEĞİŞTİRMEK İÇİN", orClick:"veya tıklayın",
        unitName:{C:"SANTİGRAT",F:"FAHRENHEİT"}, failLoad:"hava durumu yüklenemedi", loading:"yükleniyor…",
        lon:{pos:"D",neg:"B"} },
   pl:{ wind:"Wiatr", precipitation:"Opady", location:"Lokalizacja",
        feelsLike:v=>`Odczuwalna ${v}°`, humidity:v=>`wilgotność ${v}%`, localTime:t=>`${t} (czas lokalny)`,
-       hintCity:"ABY ZMIENIĆ MIASTO", hintUnit:u=>`ABY PRZEŁĄCZYĆ NA ${u}`, hintLang:"ABY ZMIENIĆ JĘZYK",
+       hintCity:"ABY ZMIENIĆ MIASTO", hintUnit:u=>`ABY PRZEŁĄCZYĆ NA ${u}`, hintLang:"ABY ZMIENIĆ JĘZYK", orClick:"lub kliknij",
        unitName:{C:"CELSJUSZA",F:"FAHRENHEITA"}, failLoad:"nie udało się wczytać pogody", loading:"wczytywanie…",
        lon:{pos:"E",neg:"W"} },
   sv:{ wind:"Vind", precipitation:"Nederbörd", location:"Plats",
        feelsLike:v=>`Känns som ${v}°`, humidity:v=>`luftfuktighet ${v}%`, localTime:t=>`${t} (lokal tid)`,
-       hintCity:"FÖR ATT BYTA STAD", hintUnit:u=>`FÖR ATT BYTA TILL ${u}`, hintLang:"FÖR ATT BYTA SPRÅK",
+       hintCity:"FÖR ATT BYTA STAD", hintUnit:u=>`FÖR ATT BYTA TILL ${u}`, hintLang:"FÖR ATT BYTA SPRÅK", orClick:"eller klicka",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"det gick inte att läsa in vädret", loading:"läser in…",
        lon:{pos:"O",neg:"V"} },
   no:{ wind:"Vind", precipitation:"Nedbør", location:"Plassering",
        feelsLike:v=>`Føles som ${v}°`, humidity:v=>`luftfuktighet ${v}%`, localTime:t=>`${t} (lokal tid)`,
-       hintCity:"FOR Å BYTTE BY", hintUnit:u=>`FOR Å BYTTE TIL ${u}`, hintLang:"FOR Å BYTTE SPRÅK",
+       hintCity:"FOR Å BYTTE BY", hintUnit:u=>`FOR Å BYTTE TIL ${u}`, hintLang:"FOR Å BYTTE SPRÅK", orClick:"eller klikk",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"kunne ikke laste inn været", loading:"laster…",
        lon:{pos:"Ø",neg:"V"} },
   da:{ wind:"Vind", precipitation:"Nedbør", location:"Placering",
        feelsLike:v=>`Føles som ${v}°`, humidity:v=>`luftfugtighed ${v}%`, localTime:t=>`${t} (lokal tid)`,
-       hintCity:"FOR AT SKIFTE BY", hintUnit:u=>`FOR AT SKIFTE TIL ${u}`, hintLang:"FOR AT SKIFTE SPROG",
+       hintCity:"FOR AT SKIFTE BY", hintUnit:u=>`FOR AT SKIFTE TIL ${u}`, hintLang:"FOR AT SKIFTE SPROG", orClick:"eller klik",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"vejret kunne ikke indlæses", loading:"indlæser…",
        lon:{pos:"Ø",neg:"V"} },
   fi:{ wind:"Tuuli", precipitation:"Sademäärä", location:"Sijainti",
        feelsLike:v=>`Tuntuu kuin ${v}°`, humidity:v=>`kosteus ${v}%`, localTime:t=>`${t} (paikallinen aika)`,
-       hintCity:"VAIHTAAKSESI KAUPUNKIA", hintUnit:u=>`VAIHTAAKSESI ${u}:EEN`, hintLang:"VAIHTAAKSESI KIELTÄ",
+       hintCity:"VAIHTAAKSESI KAUPUNKIA", hintUnit:u=>`VAIHTAAKSESI ${u}:EEN`, hintLang:"VAIHTAAKSESI KIELTÄ", orClick:"tai napsauta",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"säätä ei voitu ladata", loading:"ladataan…",
        lon:{pos:"I",neg:"L"} },
   el:{ wind:"Άνεμος", precipitation:"Βροχόπτωση", location:"Τοποθεσία",
        feelsLike:v=>`Αίσθηση ${v}°`, humidity:v=>`υγρασία ${v}%`, localTime:t=>`${t} (τοπική ώρα)`,
-       hintCity:"ΓΙΑ ΑΛΛΑΓΗ ΠΟΛΗΣ", hintUnit:u=>`ΓΙΑ ΑΛΛΑΓΗ ΣΕ ${u}`, hintLang:"ΓΙΑ ΑΛΛΑΓΗ ΓΛΩΣΣΑΣ",
+       hintCity:"ΓΙΑ ΑΛΛΑΓΗ ΠΟΛΗΣ", hintUnit:u=>`ΓΙΑ ΑΛΛΑΓΗ ΣΕ ${u}`, hintLang:"ΓΙΑ ΑΛΛΑΓΗ ΓΛΩΣΣΑΣ", orClick:"ή κάντε κλικ",
        unitName:{C:"ΚΕΛΣΙΟΥ",F:"ΦΑΡΕΝΑΪΤ"}, failLoad:"ο καιρός δεν φορτώθηκε", loading:"φόρτωση…",
        lon:{pos:"Α",neg:"Δ"} },
   cs:{ wind:"Vítr", precipitation:"Srážky", location:"Poloha",
        feelsLike:v=>`Pocitově ${v}°`, humidity:v=>`vlhkost ${v}%`, localTime:t=>`${t} (místní čas)`,
-       hintCity:"PRO ZMĚNU MĚSTA", hintUnit:u=>`PRO PŘEPNUTÍ NA ${u}`, hintLang:"PRO ZMĚNU JAZYKA",
+       hintCity:"PRO ZMĚNU MĚSTA", hintUnit:u=>`PRO PŘEPNUTÍ NA ${u}`, hintLang:"PRO ZMĚNU JAZYKA", orClick:"nebo klikněte",
        unitName:{C:"CELSIA",F:"FAHRENHEITA"}, failLoad:"počasí se nepodařilo načíst", loading:"načítání…",
        lon:{pos:"V",neg:"Z"} },
   hu:{ wind:"Szél", precipitation:"Csapadék", location:"Helyszín",
        feelsLike:v=>`Hőérzet ${v}°`, humidity:v=>`páratartalom ${v}%`, localTime:t=>`${t} (helyi idő)`,
-       hintCity:"VÁROS VÁLTÁSHOZ", hintUnit:u=>`${u}-RA VÁLTÁSHOZ`, hintLang:"NYELV VÁLTÁSHOZ",
+       hintCity:"VÁROS VÁLTÁSHOZ", hintUnit:u=>`${u}-RA VÁLTÁSHOZ`, hintLang:"NYELV VÁLTÁSHOZ", orClick:"vagy kattints",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"nem sikerült betölteni az időjárást", loading:"betöltés…",
        lon:{pos:"K",neg:"NY"} },
   ro:{ wind:"Vânt", precipitation:"Precipitații", location:"Locație",
        feelsLike:v=>`Se simte ca ${v}°`, humidity:v=>`umiditate ${v}%`, localTime:t=>`${t} (ora locală)`,
-       hintCity:"PENTRU A SCHIMBA ORAȘUL", hintUnit:u=>`PENTRU A TRECE LA ${u}`, hintLang:"PENTRU A SCHIMBA LIMBA",
+       hintCity:"PENTRU A SCHIMBA ORAȘUL", hintUnit:u=>`PENTRU A TRECE LA ${u}`, hintLang:"PENTRU A SCHIMBA LIMBA", orClick:"sau apasă",
        unitName:{C:"CELSIUS",F:"FAHRENHEIT"}, failLoad:"vremea nu a putut fi încărcată", loading:"se încarcă…",
        lon:{pos:"E",neg:"V"} },
   uk:{ wind:"Вітер", precipitation:"Опади", location:"Розташування",
        feelsLike:v=>`Відчувається як ${v}°`, humidity:v=>`вологість ${v}%`, localTime:t=>`${t} (місцевий час)`,
-       hintCity:"ЩОБ ЗМІНИТИ МІСТО", hintUnit:u=>`ЩОБ ПЕРЕЙТИ НА ${u}`, hintLang:"ЩОБ ЗМІНИТИ МОВУ",
+       hintCity:"ЩОБ ЗМІНИТИ МІСТО", hintUnit:u=>`ЩОБ ПЕРЕЙТИ НА ${u}`, hintLang:"ЩОБ ЗМІНИТИ МОВУ", orClick:"або натисніть",
        unitName:{C:"ЦЕЛЬСІЯ",F:"ФАРЕНГЕЙТА"}, failLoad:"не вдалося завантажити погоду", loading:"завантаження…",
        lon:{pos:"Сх",neg:"Зх"} },
   vi:{ wind:"Gió", precipitation:"Lượng mưa", location:"Vị trí",
        feelsLike:v=>`Cảm giác như ${v}°`, humidity:v=>`độ ẩm ${v}%`, localTime:t=>`${t} (giờ địa phương)`,
-       hintCity:"ĐỂ ĐỔI THÀNH PHỐ", hintUnit:u=>`ĐỂ CHUYỂN SANG ${u}`, hintLang:"ĐỂ ĐỔI NGÔN NGỮ",
+       hintCity:"ĐỂ ĐỔI THÀNH PHỐ", hintUnit:u=>`ĐỂ CHUYỂN SANG ${u}`, hintLang:"ĐỂ ĐỔI NGÔN NGỮ", orClick:"hoặc nhấp",
        unitName:{C:"ĐỘ C",F:"ĐỘ F"}, failLoad:"không thể tải thời tiết", loading:"đang tải…",
        lon:{pos:"Đ",neg:"T"} },
 };
@@ -688,7 +815,20 @@ for(let i=CITIES.length-1;i>0;i--){
   [CITIES[i],CITIES[j]]=[CITIES[j],CITIES[i]];
 }
 
+// optional URL params for scripted screenshots/exports: ?city=Tokyo&lang=en&unit=F&export=1
+const _params = new URLSearchParams(location.search);
 let idx = 0;
+{
+  const wantedCity = _params.get("city");
+  if(wantedCity){
+    const found = CITIES.findIndex(c => c.i18n.en.city.toLowerCase() === wantedCity.toLowerCase());
+    if(found >= 0) idx = found;
+  }
+  const wantedLang = _params.get("lang");
+  if(wantedLang && LANGS.includes(wantedLang)) langIdx = LANGS.indexOf(wantedLang);
+  if(_params.get("unit") === "F") unit = "F";
+  if(_params.get("export") === "1") document.documentElement.classList.add("export-mode");
+}
 let clockTimer = null;
 let refreshTimer = null;
 
@@ -713,6 +853,9 @@ const el = {
   hintCity: document.getElementById("hintCity"),
   hintUnit: document.getElementById("hintUnit"),
   hintLang: document.getElementById("hintLang"),
+  orClickCity: document.getElementById("orClickCity"),
+  orClickUnit: document.getElementById("orClickUnit"),
+  orClickLang: document.getElementById("orClickLang"),
 };
 
 // --- color: frio = azul forte, meio termo = amarelo, quente = vermelho ---
@@ -840,6 +983,9 @@ function render(){
   el.hintCity.textContent = t.hintCity;
   el.hintUnit.textContent = t.hintUnit(t.unitName[unit === "C" ? "F" : "C"]);
   el.hintLang.textContent = t.hintLang;
+  el.orClickCity.textContent = t.orClick;
+  el.orClickUnit.textContent = t.orClick;
+  el.orClickLang.textContent = t.orClick;
 
   if(!lastCur) return;
 
